@@ -1,0 +1,154 @@
+{% extends "base_template.html" %}
+
+{% block title %}Actividades de socios{% endblock %}
+
+{% block content %}
+
+
+<h2 class="text-center">Activades de {{nombre}}</h2>
+<!-- Button trigger modal -->
+{%if g.user and g.user.Id_tipousuario == 1 %}
+<button type="button" class="btn btn-primary btn-lg mb-3" data-toggle="modal" data-target="#nuevaActividad">
+    Agregar Actividad
+</button>
+{%endif%}
+<br>
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3" id="myTable">
+    <thead class="text-center">
+        <th scope="col">Actividades</th>
+        <th scope="col">Precio</th>
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <th scope="col"></th>
+        {%endif%}
+    </thead>
+    <tbody>
+        {%for actividad in actividades%}
+        <tr class="text-center text-dark table-secondary">
+            <td>{{actividad.Nombre}}</td>
+            <td>{{actividad.Valor}}$</td>
+            {%if g.user and g.user.Id_tipousuario == 1 %}
+            <td>
+                <a href='{{ url_for("sociosActividad.borrar_socioActividad", id = socio_id, actividad = actividad.Id) }}'
+                    class="btn btn-danger" onclick="return confirm('¿Borrar Actividad: {{actividad.Nombre}} ?')"><i
+                        class="fa fa-trash" aria-hidden="true"></i>Eliminar</a>
+            </td>
+            {%endif%}
+        </tr>
+        {%endfor%}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th id="num1" class="text-center"></th>
+
+            <!--aca se muestra la suma total de deudas-->
+        </tr>
+    </tfoot>
+</table>
+
+
+
+<!-- Modal agregar socioActividad -->
+<div class="modal fade" id="nuevaActividad" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar actividad</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="submitAdd" action='{{ url_for("sociosActividad.nueva_actividad", idSocio = socio_id)}}'
+                    method="post">
+                    <div class="container-fluid">
+                        <label>Elegir actividad</label>
+                        <select id="Id_actividad" class="form-control mb-2" name="Id_actividad" required>
+                            <option value="x">Seleccione una actividad</option>
+                            {%for actividad in listaActividades%}
+                            <option value="{{actividad.Id}}">{{actividad.Nombre}}</option>
+                            {%endfor%}
+                        </select>
+                        <span id="spanAddActividad" class="input-group text-danger font-weight-bold"></span>
+                        <label for="datetimepicker1">Fecha de Ingreso</label>
+                        <div class="input-group mb-2 col-md-6">
+                            <input type="text" class="form-control ml-n3" placeholder="YYYY-MM-DD" id="datetimepicker1"
+                                name="Fingreso" required>
+                            <div class="input-group-append">
+                                <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#submitAdd").submit(() => {
+        actividad = $("#Id_actividad").val()
+        if (actividad == 'x') {
+            $("#spanAddActividad").text("Seleccione una actividad!").show().fadeOut(5000)
+            event.preventDefault()
+        }
+    })
+
+    $(function () { // Datetimepicker
+        $('#datetimepicker1').datetimepicker({
+            format: 'YYYY-MM-DD',
+            minDate: moment('2000-01-01'),
+            maxDate: moment(),
+            icons: {
+                previous: "fas fa-chevron-left",
+                next: "fas fa-chevron-right",
+            },
+        });
+        $('.input-group-append').click(function () {
+            $('#datetimepicker1').trigger('focus');
+        });
+    });
+
+    //Filtros columnas
+    $(document).ready(function () {
+        var table = $('#myTable').DataTable({
+            "dom": 'Blfrtip',
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],            
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 300,
+            scrollX: true,
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info',
+                    footer: true
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa fa-file-pdf"> PDF</i>',
+                    titleAttr: 'Exportar a PDF',
+                    className: 'btn btn-danger',
+                    footer: true
+                }
+            ],
+            "drawCallback": function () { //calcula el total de una columna cada vez que se "dibuja"
+                var api = this.api();
+                $(api.column(0).footer()).html(
+                    'Total: $ ' + api.column(1, { page: 'current' }).data().sum().toFixed(2)
+                )
+            }
+        });
+    });
+</script>
+{% endblock %}

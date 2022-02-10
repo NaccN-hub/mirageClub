@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en" class="h-100">
+
+<head>
+    <title>{% block title %}{% endblock %} {{g.user}} | Mirage App</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" rel="stylesheet" />
+    <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.css"
+        rel="stylesheet" />
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!--Filtro tablas-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+    <link rel="" href="https://cdn.datatables.net/fixedheader/3.1.6/css/fixedHeader.dataTables.min.css">
+
+    <!--  datatable responsive  -->
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css">
+
+
+    <style>
+        body {
+            background-color: rgba(232, 220, 194, 0.212);
+        }
+
+        .round-edge {
+            border-radius: 16px 16px 16px 16px;
+        }
+
+        .dt-buttons {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body class="d-flex flex-column h-100 flex-fill">
+    <!-- NAVBAR -->
+    <nav class="navbar border-bottom border-secondary navbar-expand-lg navbar-light font-weight-bold"
+        style="background-color: #252354;">
+        <a class="navbar-brand" href="/"><img src="{{url_for('static', filename='logoMirageEdit.png')}}"
+                style="height:80px"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
+            aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
+            <ul class="nav navbar-nav float-right">
+                {%if g.user and g.user.Id_tipousuario < 3 %} <li class="nav-item active"
+                    style="border-right-color: white; border-right-width: medium; border-right-style: groove;">
+                    <a class="nav-link text-light" href='{{url_for("socios.index")}}'>Socios</a>
+                    </li>
+                    <li class="nav-item active"
+                        style="border-right-color: white; border-right-width: medium; border-right-style: groove;">
+                        <a class="nav-link text-light" href='{{url_for("deudas.index")}}'>Deudas</a>
+                    </li>
+                    <li class="nav-item active"
+                        style="border-right-color: white; border-right-width: medium; border-right-style: groove;">
+                        <a class="nav-link text-light" href='{{url_for("pagos.index")}}'>Pagos</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link text-light" href='{{url_for("cajas.index")}}'>Caja</a>
+                    </li>
+                    <li class="ml-4 nav-item active">
+                        <a class="nav-link text-light" href='{{url_for("usuarios.change_password")}}'>{{g.user}}</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link text-light" href='{{url_for("usuarios.logout")}}'>Salir</a>
+                    </li>
+                    {%elif g.user.Id_tipousuario == 3%}
+                    <li class="nav-item active"
+                        style="border-right-color: white; border-right-width: medium; border-right-style: groove;">
+                        <a class="nav-link text-light" href='{{url_for("usuarios.index")}}'>Mis Deudas</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link text-light" href='{{url_for("usuarios.profile")}}'>Mi Perfil</a>
+                    </li>
+                    <li class="ml-4 nav-item active">
+                        <a class="nav-link text-light" href='{{url_for("usuarios.change_password")}}'>{{g.user}}</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link text-light" href='{{url_for("usuarios.logout")}}'>Salir</a>
+                    </li>
+                    {%else%}
+                    <li class="nav-item active">
+                        <a class="nav-link text-light" href='{{url_for("usuarios.login")}}'>Iniciar Sesión</a>
+                    </li>
+                    {%endif%}
+            </ul>
+        </div>
+    </nav>
+    <!-- /NAVBAR -->
+    <br>
+    <!-- FLASH -->
+    <div class="container justify-content-center">
+        <div class="row">
+            <div class="col-lg-12">
+                {% with messages = get_flashed_messages(with_categories = true ) %} {% if messages %} {% for category,
+                message in messages %}
+                <div class="text-center font-weight-bold alert alert-{{ category }} alert-dismissible border border-dark"
+                    role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %} {% endif %}{% endwith %}
+            </div>
+        </div>
+    </div>
+    <!-- /FLASH -->
+    <br>
+    <!-- BODY -->
+
+    <div class="container" {%block body%}{%endblock%}>
+        {% block content %}
+        <div class="text-center mt-auto">
+            <img src="{{url_for('static', filename='mirage1.jpg')}}" alt="" style="height: 500px">
+            <img src="{{url_for('static', filename='mirage1.jpg')}}" alt="" style="height: 500px">
+            <img src="{{url_for('static', filename='mirage1.jpg')}}" alt="" style="height: 500px">
+        </div>
+        {% endblock %}
+    </div>
+
+
+    <!-- /BODY -->
+    <br><br>
+    <!-- FOOTER -->
+
+    <footer class="footer mt-auto py-2" style="background-color: #252354;">
+        <div class="container w-100">
+            <br>
+            <div class="row d-flex" style="width: 100%;">
+                <div class="col-lg-2 col-md-2 col-sm-12 col-xs-12 text-center"></div>
+                <div class="col-lg-7 col-md-6 col-sm-none col-xs-none "></div>
+                <div class="col-lg-3 col-md-4 col-sm-12 col-xs-12 justify-content-center">
+                    <div class="text-center">
+                        <a class="text-decoration-none" href="https://www.itecriocuarto.org.ar/">
+                            <h5 class="copyright display-4 text-light" style=" font-size: 1.2rem; font-weight: 500;">
+                                Desarrollado por</h5>
+                            <img class="img-thumbnail rounded-circle"
+                                src="https://mellitus.com.ar/static/images/Logoiteclabs.png"
+                                style="border-width: 0.2rem ;background-color:#4a4875;height:120px;" alt="iTecLABs">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <br>
+        </div>
+    </footer>
+
+    <!-- /FOOTER -->
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+
+    <!--Filtro tablas-->
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedheader/3.1.6/js/dataTables.fixedHeader.min.js"></script>
+
+    <!-- extension responsive -->
+    <script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+
+    <!-- datatables sum() -->
+    <script src="https://cdn.datatables.net/plug-ins/1.10.20/api/sum().js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+
+    <!--Datatables print-->
+    <script src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.print.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.html5.min.js"></script>
+</body>
+
+</html>

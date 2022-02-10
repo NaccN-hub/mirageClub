@@ -1,0 +1,80 @@
+{% extends "base_template.html" %}
+
+{% block title %}Deudas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg">
+        <div class="btn-group float-right" role="group">
+            <a class="btn btn-primary btn-lg mr-1 " href='{{url_for("usuarios.index")}}'>
+                Mis Deudas
+            </a>
+            <a class="btn btn-primary btn-lg mr-1 " href='{{url_for("usuarios.change_password")}}'>
+                Cambiar Contraseña
+            </a>
+        </div>
+    </div>
+</div>
+<br>
+<h3 class="text-left">Mis Datos</h3>
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap">
+    <thead class="text-center">
+        <th scope="col">Nombre</th>
+        <th scope="col">DNI</th>
+        <th scope="col">Fecha de Nacimiento</th>
+        <th scope="col">Sexo</th>
+    </thead>
+    <tbody>
+        <tr class="text-center text-dark table-secondary">
+            <td>{{cliente.Nombre}}</td>
+            <td>{{cliente.Dni}}</td>
+            <td>{{cliente.Fnacimiento.strftime('%d-%m-%Y')}}</td>
+            {% if cliente.Sexo == 1 %}
+            <td> Masculino </td>
+            {% else %}
+            <td> Femenino </td>
+            {%endif%}
+        </tr>
+    </tbody>
+</table>
+<br>
+<h3 class="text-left">Mis Actividades</h3>
+<table class="table table-dark table-hover table-bordered mt-3 display nowrap">
+    <thead class="text-center">
+        <th scope="col">Actividad</th>
+        <th scope="col">Descripcion</th>
+        <th scope="col">Valor</th>
+    </thead>
+    <tbody>
+        {%for actividad in actividades%}
+        <tr class="text-dark table-secondary text-center">
+            {%for act in listact%}
+            {% if actividad.Id_actividad == act.Id%}
+            <td class="text-left">{{act.Nombre}}</td>
+            <td>{{act.Descripcion}}</td>
+            <td>{{act.Valor}}</td>
+            {%endif%}
+            {%endfor%}
+        </tr>
+        {%endfor%}
+    </tbody>
+</table>
+<br>
+<h3 class="text-left">Mi Familia</h3>
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap">
+    <thead>
+        <th scope="col">Nombre</th>
+    </thead>
+    <tbody>
+        {%for familiar in familiares %}
+        <tr class="text-center text-dark table-secondary">
+            {%for persona in personas%}
+            {%if persona.Id == familiar.Id_persona%}
+            <td class="text-left">{{persona.Nombre}}</td>
+            {%endif%}
+            {%endfor%}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

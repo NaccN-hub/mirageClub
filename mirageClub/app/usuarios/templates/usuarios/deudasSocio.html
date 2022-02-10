@@ -1,0 +1,132 @@
+{% extends "base_template.html" %}
+
+{% block title %}Deudas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg">
+        <a class="btn btn-primary btn-lg mr-1 " href='{{ url_for("usuarios.index") }}'>
+            Todas
+        </a>
+        <a class="btn btn-primary btn-lg mr-1" href='{{ url_for("usuarios.abonados") }}'>
+            Pagadas
+        </a>
+        <a class="btn btn-primary btn-lg" href='{{ url_for("usuarios.activos") }}'>
+            Pendientes
+        </a>
+        <div class="btn-group float-right" role="group">
+            <a class="btn btn-primary btn-lg" href='{{ url_for("usuarios.profile") }}'>
+                Mi Perfil
+            </a>
+        </div>
+    </div>
+</div>
+<br>
+
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap" cellspacing="0"
+    id="myTable">
+    <thead class="text-center">
+        <tr>
+            <th>Socio</th>
+            <th>Descripcion</th>
+            <th>Importe</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        {%for deuda in deudas%}
+        <tr class="text-center text-dark table-secondary">
+            {% for socio in socios%}
+            {%if socio.Id == deuda.Id_socio%}
+            {%for persona in personas%}
+            {%if persona.Id == socio.Id_persona%}
+            <td class="text-left">{{persona.Nombre}}</td>
+            {%endif%}
+            {%endfor%}
+            {%endif%}
+            {%endfor%}
+            <td>{{deuda.Descripcion}} | {{deuda.Mes.strftime('%Y-%m-%d')}}</td>
+            <td>{{deuda.Importe}}</td>
+            {% if deuda.Abonada == 1 %}
+            <td> Pagada </td>
+            {% else %}
+            <td> Se debe </td>
+            {%endif%}
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th id="num1" class="text-center"></th>
+
+            <!--aca se muestra la suma total de deudas-->
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    //Filtros columnas
+    $(document).ready(function () {
+        var table = $('#myTable').DataTable({
+            "dom": 'Blfrtip',
+            //"lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],            
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            "drawCallback": function () { //calcula el total de una columna cada vez que se "dibuja"
+                var api = this.api();
+                var total = api.column(2, { page: 'current' }).data().sum().toFixed(2)
+                $(api.column(0).footer()).html(
+                    'Total: $ ' + total
+                )
+            },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info',
+                    autoPrint: true,
+                    messageTop: function () { // trae el query
+                        var query = table.search()
+                        if (query) {
+                            return '<h3 class="text-center mt-3">Deudas ("' + query + '")</h3>'
+                        }
+                        else {
+                            return '<h3 class="text-center mt-3">Deudas</h3>'
+                        }
+                    },
+                    messageBottom: function () { // calcula el total 
+                        var total = table.column(2, { page: 'current' }).data().sum().toFixed(2)
+                        return '<h4 class="text-center mt-3">Total: $' + total + '</h4>'
+                    },
+                    exportOptions: {
+                        columns: [0, 1, 2, 3]
+                    },
+                    customize: function (win) {
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .removeClass('table-hover')
+                            .css('font-size', 'inherit')
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa fa-file-pdf"> PDF</i>',
+                    titleAttr: 'Exportar a PDF',
+                    className: 'btn btn-danger',
+                    footer: true,
+                    exportOptions: {
+                        columns: [0, 1, 2, 3]
+                    },
+                }
+            ]
+        });
+    });
+</script>
+{% endblock %}

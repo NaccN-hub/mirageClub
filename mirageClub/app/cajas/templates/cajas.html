@@ -1,0 +1,505 @@
+{% extends "base_template.html" %}
+
+{% block title %}Cajas{% endblock %}
+{%block body%}style="max-width: 90%;" {%endblock%}
+
+{% block content %}
+<div class="row pb-4">
+    <div class="col-md-3">
+        <div class="form-group row">
+            <label for="desde" class="col-sm-3 col-form-label">Desde: </label>
+            <input type="date" class="col-sm-6 form-control" name="desde" id="desde" />
+        </div>
+        <div class="form-group row ">
+            <label for="hasta" class="col-sm-3 col-form-label"> Hasta: </label>
+            <input type="date" class="col-sm-6 form-control" name="hasta" id="hasta" />
+        </div>
+    </div>
+    <div class="col-md offset-md-1">
+        <br><br>
+        <div id="buscar" class="form-group row mt-1">
+            <label for="query" class="col-sm-2 col-form-label">Buscar: </label>
+            <input type="text" class="col-sm-8 form-control " name="query" id="query" />
+        </div>
+    </div>
+    <div class="col-md">
+        <br><br>
+        <div class="btn-group float-right" role="group">
+            <a class="btn btn-primary btn-lg mr-1 " href='{{ url_for("cajas.ingresos") }}'>
+                Cargar Ingresos
+                <!-- Cargar con MODAL?? // url for ruta ingresos: crear editar borrar-->
+            </a>
+            <a class="btn btn-primary btn-lg" href='{{ url_for("cajas.egresos") }}'>
+                Cargar Egresos
+                <!-- Cargar con MODAL?? // url for ruta egresos: crear editar borrar?? crear rubro-->
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Tabla Pagos -->
+    <div class="table-responsive col-md-4 mt-n3">
+        <br><br><br>
+        <table style="width:100%" class="table table-dark table-hover table-bordered display nowrap" cellspacing="0"
+            id="tablaPagos">
+            <thead class="text-center">
+                <tr>
+                    <th colspan="3" class="bg-secondary">Pagos</th>
+                </tr>
+                <tr>
+                    <th>Socio</th>
+                    <th>Fecha de Pago</th>
+                    <th>Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%for pago in pagos%}
+                <tr id="colPagos" class="text-center text-dark table-secondary">
+                    {%for deuda in deudas%}
+                    {%if deuda.Id == pago.Id_deuda%}
+                    {% for socio in socios%}
+                    {%if socio.Id == deuda.Id_socio%}
+                    {%for persona in personas%}
+                    {%if persona.Id == socio.Id_persona%}
+                    <td class="text-left " onclick="boton_ver_pago({{deuda.Id}}, {{pago.Id}})">
+                        {{persona.Nombre}}
+                    </td>
+                    <td class="text-center " onclick="boton_ver_pago({{deuda.Id}}, {{pago.Id}})">
+                        {{pago.Fecha.strftime('%Y-%m-%d')}}</td>
+                    <td class="text-right " onclick="boton_ver_pago({{deuda.Id}}, {{pago.Id}})">{{pago.Monto}}</td>
+                    {%endif%}
+                    {%endfor%}
+                    {%endif%}
+                    {%endfor%}
+                    {%endif%}
+                    {%endfor%}
+                    <!-- # MODAL BORRAR - CONFIRMACION ? -->
+                    <!-- # PAGINACION -->
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th id="num1" class="text-center"></th>
+                    <!--aca se muestra la suma total de pagos-->
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <br>
+    <!-- Tabla Ingresos -->
+    <div class="table-responsive col-md-4">
+        <table style="width:100%" class="table table-dark table-hover table-bordered display nowrap" cellspacing="0"
+            id="tablaIngresos">
+            <thead class="text-center">
+                <tr>
+                    <th colspan="3" class="bg-secondary">Ingresos</th>
+                </tr>
+                <tr>
+                    <th>Origen</th>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%for ingreso in ingresos%}
+                <tr id="colIngresos" class="text-center text-dark table-secondary">
+                    {%if ingreso.Id_socio%}
+                    {% for socio in socios%}
+                    {%if socio.Id == ingreso.Id_socio%}
+                    {%for persona in personas%}
+                    {%if persona.Id == socio.Id_persona%}
+                    <td class="text-left ">{{persona.Nombre}}</td>
+                    {%endif%}
+                    {%endfor%}
+                    {%endif%}
+                    {%endfor%}
+                    {%else%}
+                    <td class="text-left ">Otros</td>
+                    {%endif%}
+                    <td class="text-center ">{{ingreso.Fecha.strftime('%Y-%m-%d')}}</td>
+                    <td class="text-right ">{{ingreso.Monto}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th id="num2" class="text-center"></th>
+                    <!--aca se muestra la suma total de pagos-->
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Tabla Egresos -->
+    <div class="table-responsive col-md-4 mt-n3">
+        <br><br><br>
+        <table style="width:100%" class="table table-dark table-hover table-bordered display nowrap" cellspacing="0"
+            id="tablaEgresos">
+            <thead class="text-center">
+                <tr>
+                    <th colspan="3" class="bg-secondary">Egresos</th>
+                </tr>
+                <tr>
+                    <th>Motivo</th>
+                    <th>Fecha</th>
+                    <th>Importe</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%for egreso in egresos%}
+                <tr id="colIngresos" class="text-center text-dark table-secondary">
+                    {%for rubro in rubros%}
+                    {%if rubro.Id == egreso.Id_rubro%}
+                    <td class="text-left ">{{rubro.Nombre}}</td>
+                    {%endif%}
+                    {%endfor%}
+                    <td class="text-center ">{{egreso.Fecha.strftime('%Y-%m-%d')}}</td>
+                    <td class="text-right ">{{egreso.Importe}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th id="num3" class="text-center"></th>
+                    <!--aca se muestra la suma total de pagos-->
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+
+<div class="d-flex justify-content-center mt-4">
+    <div id="saldo" class="form-group-lg col-lg-3 row ml-3 table-dark font-weight-bold">
+        <label for="subt" class="col-lg-3 col-form-label-lg ml-3">Saldo: </label>
+        <input type="text" class="bg-dark text-white col-lg-8 form-control-lg ml-2 font-weight-bold"
+            style="border-style: hidden;" name="subt" id="resta" readonly disabled />
+    </div>
+</div>
+
+
+<script>
+    // Calcular Saldo
+    function saldo() {
+        let num1 = document.querySelectorAll("#num1")[1].innerHTML.replace(/[^0-9.]/g, '');
+        let num2 = document.querySelectorAll("#num2")[1].innerHTML.replace(/[^0-9.]/g, '');
+        let num3 = document.querySelectorAll("#num3")[1].innerHTML.replace(/[^0-9.]/g, '');
+        let total = (Number(num1) + Number(num2) - Number(num3)).toFixed(2)
+        $("#resta").delay(400).attr({ "value": '$ ' + total });
+    }
+
+
+    //Filtros columnas
+    $(document).ready(function () {
+        var DataTable = $.fn.dataTable;
+
+        var _link = document.createElement('a');
+
+        var _styleToAbs = function (el) {
+            var url;
+            var clone = $(el).clone()[0];
+            var linkHost;
+
+            if (clone.nodeName.toLowerCase() === 'link') {
+                clone.href = _relToAbs(clone.href);
+            }
+
+            return clone.outerHTML;
+        };
+
+        var _relToAbs = function (href) {
+
+            _link.href = href;
+            var linkHost = _link.host;
+
+
+            if (linkHost.indexOf('/') === -1 && _link.pathname.indexOf('/') !== 0) {
+                linkHost += '/';
+            }
+
+            return _link.protocol + "//" + linkHost + _link.pathname + _link.search;
+        };
+
+        var table1 = $('#tablaPagos').DataTable({
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "order": [[1, "desc"]],
+            "dom": 'lrtip', // Elementos de la tabla a mostrar: Length, Table, Pagination -- Filtering, se le saca la F para no ver search box 
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            "drawCallback": function () { //calcula el total de una columna cada vez que se "dibuja"                
+                var api = this.api();
+                $(api.column(0).footer()).html(
+                    'Total: $ ' + api.column(2, { page: 'current' }).data().sum().toFixed(2)
+                )
+            }
+        });
+
+        var table3 = $('#tablaEgresos').DataTable({
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "dom": 'lrtip',
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            "drawCallback": function () { //calcula el total de una columna cada vez que se "dibuja"
+                var api = this.api();
+                $(api.column(0).footer()).html(
+                    'Total: $ ' + api.column(2, { page: 'current' }).data().sum().toFixed(2)
+                )
+            }
+        });
+
+        var table2 = $('#tablaIngresos').DataTable({
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "dom": 'Blrtip',
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info',
+                    autoPrint: true,
+                    messageTop: function () { // trae el query
+                        var desde = $('#desde').val() || ' ~ '
+                        var hasta = $('#hasta').val() || ' ~ '
+                        var query = $('#query').val()
+                        var saldo = $('#resta').val()
+                        if (desde !== ' ~ ' || hasta !== ' ~ ') {
+                            return '<h3 class="text-center mt-3">Caja de [' + desde + ' | ' + hasta + '] ("' + query + '")' + '</h3>' + '<h3 class="text-center mb-3">Saldo: ' + saldo
+                        }
+                        else {
+                            return '<h3 class="text-center mt-3">Caja ("' + query + '")' + '</h3>' + '<h3 class="text-center mb-3">Saldo: ' + saldo
+                        }
+                    },
+                    exportOptions: {
+                        columns: ':visible'
+                    },
+                    action: function (e, dt, button, config) {
+                        var dataone = table1.buttons.exportData($.extend({ decodeEntities: false }, config.exportOptions));
+                        var datatwo = table2.buttons.exportData($.extend({ decodeEntities: false }, config.exportOptions));
+                        var datathree = table3.buttons.exportData($.extend({ decodeEntities: false }, config.exportOptions));
+
+                        var exportInfo = dt.buttons.exportInfo(config);
+                        var columnClasses = dt
+                            .columns(config.exportOptions.columns)
+                            .flatten()
+                            .map(function (idx) {
+                                return dt.settings()[0].aIds.colIngresos.anCells[dt.column(idx).index()].className.split(' ', 1)
+                            })
+                            .toArray();
+                        var addRow = function (d, tag) {
+                            var str = '<tr class="text-center">';
+
+                            for (var i = 0, ien = d.length; i < ien; i++) {
+                                // null and undefined aren't useful in the print output
+                                var dataOut = d[i] === null || d[i] === undefined ?
+                                    '' :
+                                    d[i];
+                                var classAttr = columnClasses[i] ?
+                                    'class="' + columnClasses[i] + '"' :
+                                    '';
+
+                                str += '<' + tag + ' ' + classAttr + '>' + dataOut + '</' + tag + '>';
+                            }
+
+                            return str + '</tr>';
+                        };
+
+                        // Construct a table for printing
+                        var html = '<table class="' + dt.table().node().className + '">';
+
+                        if (config.header) {
+                            html += '<thead>' + addRow(dataone.header, 'th') + '</thead>';
+                        }
+
+                        html += '<tbody>';
+                        for (var i = 0, ien = dataone.body.length; i < ien; i++) {
+                            html += addRow(dataone.body[i], 'td');
+                        }
+
+                        html += '</tbody>' + '</table>' + '<br>';
+
+                        var html2 = '<table class="' + dt.table().node().className + '">';
+                        html2 += '<thead>' + addRow(datatwo.header, 'th') + '</thead>';
+                        html2 += '<tbody>';
+                        for (var i = 0, ien = datatwo.body.length; i < ien; i++) {
+                            html2 += addRow(datatwo.body[i], 'td');
+                        }
+
+                        html2 += '</tbody>' + '</table>' + '<br>';
+
+                        var html3 = '<table class="' + dt.table().node().className + '">';
+                        html3 += '<thead>' + addRow(datathree.header, 'th') + '</thead>';
+                        html3 += '<tbody>';
+                        for (var i = 0, ien = datathree.body.length; i < ien; i++) {
+                            html3 += addRow(datathree.body[i], 'td');
+                        }
+
+                        html3 += '</tbody>' + '</table>' + '<br>';
+
+                        // if (config.footer && datathree.footer) {
+                        //     html += '<tfoot>' + addRow(datathree.footer, 'th') + '</tfoot>';
+                        // }
+
+                        var win = window.open('', '');
+                        win.document.close();
+
+                        var desde = $('#desde').val() || ' ~ '
+                        var hasta = $('#hasta').val() || ' ~ '
+                        var query = $('#query').val()
+
+                        var total1 = table1.column(2, { page: 'current' }).data().sum().toFixed(2)
+                        var total2 = table2.column(2, { page: 'current' }).data().sum().toFixed(2)
+                        var total3 = table3.column(2, { page: 'current' }).data().sum().toFixed(2)
+
+                        head1 = '<div class="row"> <h4 class="ml-4" style="width: 72%"> Tabla de Pagos </h4><h5 class="pt-1">Total: $' + total1 + '</h5></div>'
+                        head2 = '<div class="row"> <h4 class="ml-4" style="width: 72%"> Tabla de Ingresos </h4><h5 class="pt-1">Total: $' + total2 + '</h5></div>'
+                        head3 = '<div class="row"> <h4 class="ml-4" style="width: 72%"> Tabla de Egresos </h4><h5 class="pt-1">Total: $' + total3 + '</h5></div>'
+
+                        if (desde !== ' ~ ' || hasta !== ' ~ ') {
+                            var head = '<title>' + 'Mirage | Caja de [' + desde + ' | ' + hasta + '] ("' + query + '")' + '</title>';
+                        }
+                        else {
+                            var head = '<title>' + 'Mirage | Caja ("' + query + '")' + '</title>';
+                        }
+
+                        $('style, link').each(function () {
+                            head += _styleToAbs(this);
+                        });
+
+                        try {
+                            win.document.head.innerHTML = head; // Work around for Edge
+                        }
+                        catch (e) {
+                            $(win.document.head).html(head); // Old IE
+                        }
+
+                        // Inject the table and other surrounding information
+                        win.document.body.innerHTML =
+                            '<h1 class="text-center">' + exportInfo.title + '</h1>' +
+                            '<div>' + (exportInfo.messageTop || '') + '</div>' +
+                            head1 + html + head2 + html2 + head3 + html3
+                        '<div>' + (exportInfo.messageBottom || '') + '</div>';
+
+                        $(win.document.body).addClass('dt-print-view');
+
+                        $('img', win.document.body).each(function (i, img) {
+                            img.setAttribute('src', _relToAbs(img.getAttribute('src')));
+                        });
+
+                        if (config.customize) {
+                            config.customize(win, config, dt);
+                        }
+
+                        // Allow stylesheets time to load
+                        var autoPrint = function () {
+                            if (config.autoPrint) {
+                                win.print(); // blocking - so close will not
+                                win.close(); // execute until this is done
+                            }
+                        };
+
+                        if (navigator.userAgent.match(/Trident\/\d.\d/)) { // IE needs to call this without a setTimeout
+                            autoPrint();
+                        }
+                        else {
+                            win.setTimeout(autoPrint, 1000);
+                        }
+                    },
+                    customize: function (win) {
+                        var last = null;
+                        var current = null;
+                        var bod = [];
+
+                        var css = '@page',
+                            head = win.document.head || win.document.getElementsByTagName('head')[0],
+                            style = win.document.createElement('style');
+
+                        style.type = 'text/css';
+                        style.media = 'print';
+
+                        if (style.styleSheet) {
+                            style.styleSheet.cssText = css;
+                        }
+                        else {
+                            style.appendChild(win.document.createTextNode(css));
+                        }
+
+                        head.appendChild(style);
+
+                        $(win.document.body)
+                            .css('color', 'black')
+                            .prepend(
+                                // '<img src="http://datatables.net/media/images/logo-fade.png" style="position:relative; top:0; left:0;" />'
+                                // '<img src="wer.png" alt="CRG" style="position:relative; top:0; left:0;" />'
+                            );
+
+                        $(win.document.body).find('table')
+                            .addClass('table-bordered compact')
+                            .removeClass('table-hover')
+                            .css('font-size', 'inherit');
+
+                        $(win.document.body).find('th').addClass('text-center rotate>div').css('width', '33%');
+                        $(win.document.body).find('td').addClass('rotate>div').css('width', '33%');
+                    }
+                },
+            ],
+            "drawCallback": function () { //calcula el total de una columna cada vez que se "dibuja"
+                var api = this.api();
+                $(api.column(0).footer()).html(
+                    'Total: $ ' + api.column(2, { page: 'current' }).data().sum().toFixed(2)
+                )
+                saldo()
+            }
+        });
+
+        $('#query').on('keyup change', function () {
+            table1.search(this.value).draw();
+            table2.search(this.value).draw();
+            table3.search(this.value).draw();
+            saldo()
+        })
+
+        $.fn.dataTable.ext.search.push(
+            function (settings, data, dataIndex) {
+                var desde = $('#desde').val();
+                var hasta = $('#hasta').val();
+                var fecha = data[1]; // columna con data de fecha
+
+                if ((!desde && !hasta) ||
+                    (!desde && fecha <= hasta) ||
+                    (desde <= fecha && !hasta) ||
+                    (desde <= fecha && fecha <= hasta)) {
+                    return true;
+                }
+                return false;
+            }
+        );
+
+        $('#desde, #hasta').change(function () {
+            table1.draw();
+            table2.draw();
+            table3.draw();
+        })
+    });
+</script>
+{% endblock %}

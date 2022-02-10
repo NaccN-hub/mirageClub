@@ -1,0 +1,261 @@
+{% extends "base_template.html" %}
+
+{% block title %}Actividades{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg">
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#modelId">
+            Cargar Nueva Actividad
+        </button>
+        {%endif%}
+    </div>
+    <div class="col-md">
+        <div class="btn-group float-right" role="group">
+            <a class="btn btn-primary btn-lg mr-1 " href='{{ url_for("personas.index") }}'>
+                Personas
+            </a>
+            <a class="btn btn-primary btn-lg" href='{{ url_for("socios.index") }}'>
+                Socios
+            </a>
+        </div>
+    </div>
+</div>
+<br>
+<table class="table table-dark table-hover table-bordered mt-3 display nowrap" id="myTable" style="width:100%"
+    cellspacing="0">
+    <thead class="text-center">
+        <th scope="col">Actividad</th>
+        <th scope="col">Descripcion</th>
+        <th scope="col">Valor</th>
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <th scope="col">Acciones</th>
+        {%endif%}
+    </thead>
+    <tbody>
+        {%for act in actividad%}
+        <tr class="text-dark table-secondary text-center">
+            <td class="text-left">{{act.Nombre}}</td>
+            <td>{{act.Descripcion}}</td>
+            <td>{{act.Valor}}</td>
+            {%if g.user and g.user.Id_tipousuario == 1 %}
+            <td>
+                <div class="form-group" style="display:flex; justify-content:space-evenly">
+                    <a href='{{ url_for("actividades.borrar_actividad", id = act.Id) }}'
+                        onclick="return confirm('Esta seguro?')">
+                        <button class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Eliminar</button>
+                    </a>
+                    <button class="btn btn-primary" onclick="boton_editar({{act.Id}})"> Editar</button>
+                    <button class="btn btn-success" onclick="boton_ver({{act.Id}})"> <i class="fa fa-eye"
+                            aria-hidden="true"></i>Ver </button>
+                </div>
+            </td>
+            {%endif%}
+        </tr>
+        {%endfor%}
+    </tbody>
+</table>
+
+<!-- Modal ELIMINAR -->
+
+
+<!-- Modal AGREGAR-->
+<div class="modal fade" id="modelId" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Nueva Actividad
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action='{{ url_for("actividades.nueva_actividad") }}' method="post">
+                    <div class="card">
+                        <div class="card-body">
+                            <label for="Nombre">Nombre</label>
+                            <input type="text" maxlength="150" class="form-control mb-2" name="Nombre"
+                                placeholder="Nombre" required>
+                            <label for="Valor">Valor</label>
+                            <input type="text" maxlength="11" class="form-control mb-2" name="Valor" placeholder="Valor"
+                                pattern="[0-9]{1,8}\.[0-9]{1,2}" title="12345678.99" required>
+                            <!-- ##Limitar input a  99999999.99 -->
+                            <label for="Descripcion">Descripcion</label>
+                            <input type="text" maxlength="350" class="form-control mb-2" name="Descripcion"
+                                placeholder="Descripcion">
+                        </div>
+                    </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" type="submit">
+                    Guardar
+                </button>
+            </div>
+        </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal EDITAR-->
+<div class="modal fade" id="modal_editar" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- ID #?? // form.request['idActividad']-->
+                <form action='{{ url_for("actividades.editar_actividad") }}' method="post">
+                    <!-- Recarga la pagina, AJAX? -->
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="text" name="idActividad" id="idActividad" style="display: none;">
+                            <label for="Nombre">Nombre</label>
+                            <input type="text" maxlength="150" class="form-control mb-2" id="Nombre" name="Nombre"
+                                placeholder="Nombre" required>
+                            <label for="Valor">Valor</label>
+                            <input type="text" maxlength="11" class="form-control mb-2" id="Valor" name="Valor"
+                                placeholder="Valor" pattern="[0-9]{1,8}\.[0-9]{1,2}" title="12345678.99" required>
+                            <!-- ##Limitar input a  99999999.99 -->
+                            <label for="Descripcion">Descripcion</label>
+                            <input type="text" maxlength="350" class="form-control mb-2" id="Descripcion"
+                                name="Descripcion" placeholder="Descripcion">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal VER -->
+<div class="modal fade" id="modal_ver" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Info</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="text" name="idActividad" id="idActividadVer" style="display: none;">
+                            <label for="Nombre">Nombre</label>
+                            <input type="text" class="form-control mb-2" id="NombreVer" readOnly>
+                            <label for="Valor">Valor</label>
+                            <input type="number" class="form-control mb-2" id="ValorVer" readOnly>
+                            <label for="Descripcion">Descripcion</label>
+                            <input type="text" class="form-control mb-2" id="DescripcionVer" readOnly>
+                            <label for="Activo">Estado</label>
+                            <input type="text" class="form-control mb-2" id="EstadoVer" readOnly>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function boton_editar(id) { // Carga los datos desde la DB al html con los #id de los input
+        $.ajax({
+            url: '{{ url_for("actividades.modal_editar")}}',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([{
+                "idActividad": id,
+            }]),
+            success: function (data) {
+                // console.log(data) // ###
+                if (data) {
+                    // Se llena el ID del formulario (oculto) para pasar a la funcion guardar
+                    $("#idActividad").attr({ "value": data.id })
+                    $("#Nombre").attr({ "value": data.Nombre })
+                    $("#Valor").attr({ "value": data.Valor })
+                    $("#Descripcion").attr({ "value": data.Descripcion })
+                    $("#modal_editar").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+                    // Cerrar Modal ???
+                }
+            }
+        });
+    }
+
+    function boton_ver(id) { // Carga los datos desde la DB al html con los #id de los input
+        $.ajax({
+            url: '{{ url_for("actividades.modal_ver")}}',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([{
+                "idActividad": id,
+            }]),
+            success: function (data) {
+                // console.log(data)
+                if (data) {
+                    $("#ActividadVer").attr({ "value": data.Nombre })
+                    $("#NombreVer").attr({ "value": data.Nombre })
+                    $("#ValorVer").attr({ "value": data.Valor })
+                    $("#DescripcionVer").attr({ "value": data.Descripcion })
+                    if (data.Activo == 1) {
+                        $("#EstadoVer").attr({ "value": 'Activo' })
+                    } else {
+                        $("#EstadoVer").attr({ "value": 'Inactivo' })
+                    }
+                    $("#modal_ver").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+                    // Cerrar Modal ???
+                }
+            }
+        });
+    }
+
+    //Filtros columnas
+    $(document).ready(function () {
+        var table = $('#myTable').DataTable({
+            "dom": 'Blfrtip',
+            "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            orderCellsTop: true,
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            scrollY: 525,
+            scrollX: true,
+            scrollCollapse: true,
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa fa-file-pdf"> PDF</i>',
+                    titleAttr: 'Exportar a PDF',
+                    className: 'btn btn-danger',
+                }
+            ]
+        });
+    });
+</script>
+
+{% endblock %}

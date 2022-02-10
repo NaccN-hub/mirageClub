@@ -1,0 +1,360 @@
+{% extends "base_template.html" %}
+
+{% block title %}Deudas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg">
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#modelBatch">
+            Generar Deuda
+        </button>
+        {%endif%}
+        <div class="btn-group float-right" role="group">
+            <a class="btn btn-primary btn-lg mr-1 " href='{{ url_for("deudas.index") }}'>
+                Todos
+            </a>
+            <a class="btn btn-primary btn-lg mr-1" href='{{ url_for("deudas.abonados") }}'>
+                Pagados
+            </a>
+            <a class="btn btn-primary btn-lg" href='{{ url_for("deudas.activos") }}'>
+                Pendientes
+            </a>
+        </div>
+    </div>
+</div>
+<br>
+
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap" cellspacing="0"
+    id="myTable">
+    <thead class="text-center">
+        <tr>
+            <th>Socio</th>
+            <th>Descripcion</th>
+            <th>Importe</th>
+            <th>Estado</th>
+            <th>Fecha de Generacion</th>
+            {%if g.user and g.user.Id_tipousuario == 1 %}
+            <th></th>
+            {%endif%}
+        </tr>
+    </thead>
+    <tbody>
+        {%for deuda in deudas%}
+        <tr class="text-center text-dark table-secondary">
+            {% for socio in socios%}
+            {%if socio.Id == deuda.Id_socio%}
+            {%for persona in personas%}
+            {%if persona.Id == socio.Id_persona%}
+            <td class="text-left">{{persona.Nombre}}</td>
+            {%endif%}
+            {%endfor%}
+            {%endif%}
+            {%endfor%}
+            <td class="text-center">{{deuda.Descripcion}} |
+                {{deuda.Mes.strftime('%Y-%m-%d')}}</td>
+            <td class="text-center">{{deuda.Importe}}</td>
+            {% if deuda.Abonada == 1 %}
+            <td class="text-center"> Pagada </td>
+            {% else %}
+            <td class="text-center"> Se debe </td>
+            {%endif%}
+            <td class="text-center">{{deuda.Fgeneracion.strftime('%d-%m-%Y
+                %H:%M:%S')}}</td>
+            {%if g.user and g.user.Id_tipousuario == 1 %}
+            <td>
+                <a onclick="boton_pagar({{deuda.Id}})" class="btn btn-success text-white">Abonar</a>
+                <a href='{{ url_for("deudas.borrar_deuda", id = deuda.Id) }}' class="ml-2 btn btn-danger"
+                    onclick="return confirm('¿Borrar Deuda: {{deuda}} - {{deuda.Mes}} ?')"><i class="fa fa-trash"
+                        aria-hidden="true"></i> Eliminar</a>
+            </td>
+            {%endif%}
+            <!-- # MODAL BORRAR - CONFIRMACION ? -->
+            <!-- # PAGINACION -->
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th id="num1" class="text-center"></th>
+
+            <!--aca se muestra la suma total de deudas-->
+        </tr>
+    </tfoot>
+</table>
+
+<!-- Modal BATCH-->
+<div class="modal fade" id="modelBatch" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Generar Deuda para todos los Socios con Actividades registradas
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="submitAdd" action='{{ url_for("deudas.batch_deuda") }}' method="post">
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- <label for="Descripcion">Descripcion</label>
+                            <input type="text" maxlength="300" class="form-control mb-2" name="Descripcion"
+                                placeholder="Descripcion" required> -->
+                            <!-- <label for="Mes">Mes de Facturacion</label>
+                            <input type="date" class="form-control mb-2 col-md-5" min="2000-01-01" max="2021-12-31"
+                                name="Mes" required> -->
+                            <label for="datetimepicker1">Mes</label>
+                            <div class="input-group col-md-6">
+                                <input type="text" class="form-control ml-n3" placeholder="MM/YYYY" id='datetimepicker1'
+                                    name="Mes" required>
+                                <div class="input-group-append">
+                                    <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" type="submit"
+                    onclick="return confirm('¿Generar Deudas?\nFecha: '+$('#datetimepicker1').val())">
+                    Guardar
+                </button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal PAGAR -->
+<div class="modal fade" id="modal_pagar" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pagar</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="submitPagar" action='{{ url_for("deudas.abonar_deuda")}}' method="post">
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="text" name="idDeuda" id="idDeudaPagar" style="display: none;">
+                            <label for="Id_socioPagar">Persona</label>
+                            <select class="form-control mb-2" name="Id_socio" id="Id_socioPagar" required disabled>
+                                <option value="x">Seleccione una Persona</option>
+                                {% for socio in socios%}
+                                {%for persona in personas%}
+                                {%if persona.Id == socio.Id_persona%}
+                                <option value="{{socio.Id}}">{{persona.Nombre}}</option>
+                                {%endif%}
+                                {%endfor%}
+                                {%endfor%}
+                            </select>
+                            <label for="DescripcionPagar">Descripcion</label>
+                            <input type="text" maxlength="300" class="form-control mb-2" name="Descripcion"
+                                id="DescripcionPagar" required readOnly>
+                            <div class="form-row">
+                                <div class="form-group col-md-5">
+                                    <label for="MesPagar">Mes</label>
+                                    <input type="date" class="form-control" name="Mes" id="MesPagar" required disabled>
+                                </div>
+                                <div class="form-group ml-4 col-md-6">
+                                    <label for="ImportePagar">Valor de la Cuota</label>
+                                    <input type="text" step="0.01" maxlength="11" class="form-control" name="Importe"
+                                        id="ImportePagar" pattern="[0-9]{1,8}\.[0-9]{1,2}" title="12345678.99" required
+                                        readOnly>
+                                </div>
+                                <div class="form-group col-md-5"></div>
+                                <div class="form-group ml-4 col-md-6">
+                                    <label for="SaldoPagar">Saldo</label>
+                                    <input type="text" class="form-control mb-2" name="Saldo" id="SaldoPagar" required
+                                        readOnly>
+                                </div>
+                            </div>
+                            <label for="MontoPagar">Monto a Pagar</label>
+                            <input type="text" step="0.01" maxlength="11" class="form-control mb-2"
+                                placeholder="Ingresar monto (0.00)" name="Monto" id="MontoPagar"
+                                pattern="[0-9]{1,8}\.[0-9]{1,2}" title="12345678.99" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('¿Cargar Pago?\nMonto: $'+$('#MontoPagar2').val())">Cargar
+                            Pago</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <!-- #MODAL ON CLOSE $attr(disabled) ??? // CLOSE MODAL -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(function () { // Datetimepicker
+        $('#datetimepicker1').datetimepicker({
+            format: 'MM/YYYY',
+            minDate: moment('2000-01-01'),
+            maxDate: moment(),
+            icons: {
+                previous: "fas fa-chevron-left",
+                next: "fas fa-chevron-right",
+            },
+        });
+        $('.input-group-append').click(function () {
+            $('.form-control').trigger('focus');
+        });
+    });
+
+
+    function clonar(modal_) {
+        var clon = modal_.clone()
+        clon.find('#submitPagar').attr('id', 'submitPagar2')
+        clon.find('#MontoPagar').attr('id', 'MontoPagar2')
+
+        clon.modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+    }
+
+    function boton_pagar(id) { // Carga los datos desde la DB al html con los #id de los input
+        $.ajax({
+            url: '{{ url_for("deudas.modal_ver")}}',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([{
+                "idDeuda": id,
+            }]),
+            success: function (data) {
+                // console.log(data)
+                if (data) {
+                    if (data.Maxinput == 0 && data.Abonada == 1) {
+                        alert('Deuda pagada')
+                    }
+                    else {
+                        $("#idDeudaPagar").attr({ "value": data.Id })
+                        $("#Id_socioPagar").val(data.Id_socio)
+                        $("#DescripcionPagar").attr({ "value": data.Descripcion })
+                        $("#MesPagar").attr({ "value": data.Mes })
+                        $("#ImportePagar").attr({ "value": data.Importe })
+                        $("#SaldoPagar").attr({ "value": data.Maxinput })
+                        $("#MontoPagar").attr({ "max": data.Maxinput })
+                        clonar($("#modal_pagar"))
+                        // Cerrar Modal ???
+                    }
+                }
+            }
+        });
+    }
+
+
+    //Filtros columnas
+    $(document).ready(function () {
+        var table = $('#myTable').DataTable({
+            "dom": 'Blfrtip',
+            //"lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],            
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            "drawCallback": function () { //calcula el total de una columna cada vez que se "dibuja"
+                var api = this.api();
+                var total = api.column(2, { page: 'current' }).data().sum().toFixed(2)
+                $(api.column(0).footer()).html(
+                    'Total: $ ' + total
+                )
+            },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info',
+                    autoPrint: true,
+                    messageTop: function () { // trae el query
+                        var query = table.search()
+                        var total = table.column(2, { page: 'current' }).data().sum().toFixed(2)
+                        var result = '<div class="row">'
+
+                        if (query) {
+                            result += '<h3 class="text-left mt-3 ml-3">Deudas ("' + query + '")</h3>'
+                        }
+                        else {
+                            result += '<h3 class="text-left mt-3 ml-3">Deudas</h3>'
+                        }
+                        return result += '<h4 class="offset-md-7 text-right mt-3">Total: $' + total + '</h4></div>'
+
+                    },
+                    exportOptions: {
+                        columns: [0, 1, 2, 3, 4]
+                    },
+                    customize: function (win) {
+                        var last = null;
+                        var current = null;
+                        var bod = [];
+
+                        var css = '@page',
+                            head = win.document.head || win.document.getElementsByTagName('head')[0],
+                            style = win.document.createElement('style');
+
+                        style.type = 'text/css';
+                        style.media = 'print';
+
+                        if (style.styleSheet) {
+                            style.styleSheet.cssText = css;
+                        }
+                        else {
+                            style.appendChild(win.document.createTextNode(css));
+                        }
+
+                        head.appendChild(style);
+
+                        $(win.document.body).find('th').addClass('text-center').css('width', '20%');
+                        $(win.document.body).find('td').addClass('text-center').css('width', '20%');
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .removeClass('table-hover')
+                            .css('font-size', 'inherit')
+
+
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa fa-file-pdf"> PDF</i>',
+                    titleAttr: 'Exportar a PDF',
+                    className: 'btn btn-danger',
+                    footer: true,
+                    exportOptions: {
+                        columns: [0, 1, 2, 3, 4]
+                    },
+                }
+            ]
+        });
+
+        //Creamos una fila en el head de la tabla y lo clonamos para cada columna
+        // $('#myTable thead tr').clone(true).appendTo( '#myTable thead' );
+
+        // $('#myTable thead tr:eq(1) th').each( function (i) {
+        //     var title = $(this).text(); //es el nombre de la columna
+        //     $(this).html( '<input type="text" placeholder="Search...'+title+'" />' );
+
+        //     $( 'input', this ).on( 'keyup change', function () {
+        //         if ( table.column(i).search() !== this.value ) {
+        //             table
+        //             .column(i)
+        //             .search( this.value )
+        //             .draw();
+        //         }
+        //     } );
+        // } );   
+    });
+</script>
+{% endblock %}

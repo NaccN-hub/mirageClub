@@ -1,0 +1,323 @@
+{% extends "base_template.html" %}
+
+{% block title %}Personas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg">
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#modelNuevo">
+            Cargar Nueva Persona
+        </button>
+        {%endif%}
+    </div>
+    <div class="col-md">
+        <div class="btn-group float-right" role="group">
+            <a class="btn btn-primary btn-lg mr-1 " href='{{ url_for("actividades.index") }}'>
+                Actividades
+            </a>
+            <a class="btn btn-primary btn-lg" href='{{ url_for("socios.index") }}'>
+                Socios
+            </a>
+        </div>
+    </div>
+</div>
+<br>
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap" id="myTable"
+    cellspacing="0">
+    <thead class="text-center">
+        <th scope="col">Nombre</th>
+        <th scope="col">DNI</th>
+        <th scope="col">Fecha de Nacimiento</th>
+        <th scope="col">Sexo</th>
+        <th scope="col">Estado</th>
+        <th scope="col">Fecha de Carga</th>
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <th scope="col"></th>
+        {%endif%}
+    </thead>
+    <tbody>
+        {%for pers in persona%}
+        <tr class="text-center text-dark table-secondary">
+            <td class="text-left" onclick="boton_ver({{pers.Id}})">{{pers.Nombre}}</td>
+            <td onclick="boton_ver({{pers.Id}})">{{pers.Dni}}</td>
+            <td onclick="boton_ver({{pers.Id}})">{{pers.Fnacimiento.strftime('%d-%m-%Y')}}</td>
+            {% if pers.Sexo == 1 %}
+            <td onclick="boton_ver({{pers.Id}})"> Masculino </td>
+            {% else %}
+            <td onclick="boton_ver({{pers.Id}})"> Femenino </td>
+            {%endif%}
+            {% if pers.Activo == 1 %}
+            <td onclick="boton_ver({{pers.Id}})"> Activo </td>
+            {% else %}
+            <td onclick="boton_ver({{pers.Id}})"> Inactivo </td>
+            {%endif%}
+            <td onclick="boton_ver({{pers.Id}})">{{pers.Fcarga.strftime('%d-%m-%Y %H:%M:%S')}}</td>
+            {%if g.user and g.user.Id_tipousuario == 1 %}
+            <td>
+                <a href='{{ url_for("personas.borrar_persona", id = pers.Id) }}' class="btn btn-danger"
+                    onclick="return confirm('Esta seguro?')"><i class="fa fa-trash" aria-hidden="true"></i> Eliminar</a>
+            </td>
+            {%endif%}
+            <!-- # MODAL BORRAR - CONFIRMACION ? -->
+            <!-- # PAGINACION -->
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<!-- Modal AGREGAR-->
+<div class="modal fade" id="modelNuevo" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Nueva Persona
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action='{{ url_for("personas.nueva_persona") }}' method="post">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="Nombre">Nombre</label>
+                                    <input type="text" maxlength="150" class="form-control mb-2" name="Nombre"
+                                        id="Nombre" placeholder="Nombre" required>
+                                </div>
+                                <div class="form-group col-md-3 ml-4">
+                                    <label for="Sexo">Sexo</label>
+                                    <select type="text" class="form-control mb-2" name="Sexo" id="Sexo" required>
+                                        <option value=1>Masculino</option>
+                                        <option value=0>Femenino</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label for="Dni">DNI</label>
+                                    <input type="text" maxlength="10" class="form-control mb-2" name="Dni" id="Dni"
+                                        placeholder="DNI" pattern="[1-9]{1}[0-9]{1}\.[0-9]{3}\.[0-9]{3}"
+                                        title="Numero de DNI con puntos 11.123.123" required>
+                                    <!-- Verificar digitos dni ## LENGTH 8 SIN PUNTOS, DB 11 -->
+                                </div>
+                                <div class="form-group col-md-3 mx-2">
+                                    <label for="Fnacimiento">Fecha de Nacimiento</label>
+                                    <input type="date" class="form-control mb-2" min="1920-01-01" name="Fnacimiento"
+                                        id="Fnacimiento" required>
+                                    <!-- Verificar fnacimiento ## RANGO ?? -->
+                                </div>
+                                <div class="form-group col-md-3 ml-1">
+                                    <label for="Telefono">Telefono</label>
+                                    <input type="tel" maxlength="16" class="form-control mb-2" name="Telefono"
+                                        id="Telefono" pattern="[0-9]{5,}" title="Por lo menos 5 digitos numericos"
+                                        placeholder=" Telefono">
+                                    <!-- Telefono min="15000000" ?? ## PATTERN 15 XX XX XXX ## DB LENGTH 50-->
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="Direccion">Direccion</label>
+                                    <input type="text" maxlength="200" class="form-control mb-2" name="Direccion"
+                                        id="Direccion" placeholder="Direccion">
+                                </div>
+                                <div class="form-group col-md-5 ml-1">
+                                    <label for="Email">Email</label>
+                                    <input type="email" maxlength="100" class="form-control mb-2" name="Email"
+                                        id="Email" placeholder="Email@email.com"
+                                        pattern="[a-zA-Z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="user@mail.com">
+                                    <!-- DB LENGTH 100 ## PATTERN ?? -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" type="submit">
+                    Guardar
+                </button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal VER -->
+<div class="modal fade" id="modal_ver" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Info</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- ID #?? // form.request['idActividad']-->
+                <form action='{{ url_for("personas.editar_persona") }}' method="post">
+                    <!-- Recarga la pagina, AJAX? -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-row">
+                                <input type="text" name="idPersona" id="idPersonaVer" style="display: none;">
+                                <div class="form-group col-md-6">
+                                    <label for="Nombre">Nombre</label>
+                                    <input type="text" maxlength="150" class="form-control mb-2" id="NombreVer"
+                                        name="Nombre" placeholder="Nombre" required readOnly>
+                                </div>
+                                <div class="form-group col-md-3 ml-4">
+                                    <label for="Sexo">Sexo</label>
+                                    <select type="text" class="form-control mb-2" id="SexoVer" name="Sexo" required
+                                        disabled>
+                                        <option value=1>Masculino</option>
+                                        <option value=0>Femenino</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label for="Dni">DNI</label>
+                                    <input type="text" maxlength="10" class="form-control mb-2" id="DniVer" name="Dni"
+                                        pattern="[1-9]{1}[0-9]{1}\.[0-9]{3}\.[0-9]{3}"
+                                        title="Numero de DNI con puntos 11.123.123" required readOnly>
+                                    <!-- Verificar digitos dni # SIN PUNTOS ? -->
+                                </div>
+                                <div class="form-group col-md-3 mx-2">
+                                    <label for="Fnacimiento">Fecha de Nacimiento</label>
+                                    <input type="date" class="form-control mb-2" min="1920-01-01" max="2016-12-31"
+                                        id="FnacimientoVer" name="Fnacimiento" required readOnly>
+                                    <!-- Verificar fnacimiento rango ## RANGO ??  -->
+                                </div>
+                                <div class="form-group col-md-3 ml-1">
+                                    <label for="Telefono">Telefono</label>
+                                    <input type="tel" maxlength="16" class="form-control mb-2" id="TelefonoVer"
+                                        name="Telefono" pattern="[0-9]{5,}" title="Por lo menos 5 digitos numericos"
+                                        placeholder="Telefono" readOnly>
+                                    <!-- Telefono min="15000000" ?? ## PATTERN 15 XX XX XXX ## DB LENGTH 50-->
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="Direccion">Direccion</label>
+                                    <input type="text" maxlength="200" placeholder="Direccion" class="form-control mb-2"
+                                        id="DireccionVer" name="Direccion" readOnly>
+                                </div>
+                                <div class="form-group col-md-5 ml-1">
+                                    <label for="Email">Email</label>
+                                    <input type="email" maxlength="100" class="form-control mb-2" id="EmailVer"
+                                        name="Email" placeholder="Email@email.com"
+                                        pattern="[a-zA-Z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="user@mail.com"
+                                        readOnly>
+                                    <!-- DB LENGTH 100 ## PATTERN ?? -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        {%if g.user and g.user.Id_tipousuario == 1 %}
+                        <button type="submit" id="btn-save" class="btn btn-primary"
+                            style="display: none;">Guardar</button>
+                        <button type="button" id="btn-edit" class="btn btn-success btn-md" onclick="boton_editar()"
+                            data-dismiss="modal">Editar</button>
+                        {%endif%}
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <!-- #MODAL ON CLOSE $attr(disabled) ??? // CLOSE MODAL -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function int_length(form) { // Limitar input de numeros ## REEMPLAZADA POR PATTERN
+        if (form.value.length > form.maxLength) form.value = form.value.slice(0, form.maxLength);
+    }
+
+    function boton_editar() { // Modifica los atributos readOnly y Disabled del modal  #Ver
+        $("#NombreVer").removeAttr("readOnly")
+        $("#DniVer").removeAttr("readOnly")
+        $("#DireccionVer").removeAttr("readOnly")
+        $("#FnacimientoVer").removeAttr("readOnly")
+        $("#SexoVer").removeAttr("disabled")
+        $("#TelefonoVer").removeAttr("readOnly")
+        $("#EmailVer").removeAttr("readOnly")
+        $("#btn-save").removeAttr("style")
+        $("#btn-edit").attr({ "style": "display: none;" })
+        $("#modal_ver").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+        // Cerrar Modal ???
+    }
+
+    function boton_ver(id) { // Carga los datos desde la DB al html con los #id de los input
+        $.ajax({
+            url: '{{ url_for("personas.modal_ver")}}',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([{
+                "idPersona": id,
+            }]),
+            success: function (data) {
+                // console.log(data)
+                if (data) {
+                    $("#SexoVer option").each(function () {
+                        if (this.value == data.Sexo) {
+                            $(this).attr('selected', 'selected')
+                        }
+                        else {
+                            $(this).removeAttr('selected')
+                        }
+                    })
+                    $("#idPersonaVer").attr({ "value": data.Id })
+                    $("#NombreVer").attr({ "value": data.Nombre })
+                    $("#DniVer").attr({ "value": data.Dni })
+                    $("#DireccionVer").attr({ "value": data.Direccion })
+                    $("#FnacimientoVer").attr({ "value": data.Fnacimiento })
+                    $("#TelefonoVer").attr({ "value": data.Telefono })
+                    $("#EmailVer").attr({ "value": data.Email })
+                    $("#btn-save").attr({ "style": "display: none;" })
+                    $("#btn-edit").removeAttr("style")
+                    $("#NombreVer").attr({ "readOnly": "readOnly" })
+                    $("#DniVer").attr({ "readOnly": "readOnly" })
+                    $("#DireccionVer").attr({ "readOnly": "readOnly" })
+                    $("#FnacimientoVer").attr({ "readOnly": "readOnly" })
+                    $("#SexoVer").attr({ "disabled": "disabled" })
+                    $("#TelefonoVer").attr({ "readOnly": "readOnly" })
+                    $("#EmailVer").attr({ "readOnly": "readOnly" })
+                    $("#modal_ver").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+                    // Cerrar Modal ???
+                }
+            }
+        });
+    }
+
+    //Filtros columnas
+    $(document).ready(function () {
+        var table = $('#myTable').DataTable({
+            "dom": 'Blfrtip',
+            "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            orderCellsTop: true,
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            scrollY: 525,
+            scrollX: true,
+            "order": [[5, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa fa-file-pdf"> PDF</i>',
+                    titleAttr: 'Exportar a PDF',
+                    className: 'btn btn-danger'
+                }
+            ]
+        });
+    });
+</script>
+
+{% endblock %}

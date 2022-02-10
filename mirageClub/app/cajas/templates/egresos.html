@@ -1,0 +1,274 @@
+{% extends "base_template.html" %}
+
+{% block title %}Egresos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg">
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#modelNuevo">
+            Cargar Nuevo Egreso
+        </button>
+        {%endif%}
+    </div>
+
+    <div class="col-md">
+        <div class="btn-group float-right" role="group">
+            <a class="btn btn-primary btn-lg mr-1 " href='{{ url_for("cajas.ingresos") }}'>
+                Ingresos
+            </a>
+            <a class="btn btn-primary btn-lg" href='{{ url_for("cajas.rubros") }}'>
+                Rubros
+            </a>
+        </div>
+    </div>
+</div>
+<br>
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap" id="myTable">
+    <thead class="text-center">
+        <th scope="col">Motivo</th>
+        <th scope="col">Fecha</th>
+        <th scope="col">Importe</th>
+        <th scope="col">Descripcion</th>
+        <th scope="col">Fecha de Carga</th>
+    </thead>
+    <tbody>
+        {%for egreso in egresos %}
+        <tr class="text-center text-dark table-secondary">
+            {% for rubro in rubros%}
+            {%if rubro.Id == egreso.Id_rubro%}
+            <td class="text-left" onclick="boton_ver({{egreso.Id}})">{{rubro.Nombre}}</td>
+            {%endif%}
+            {%endfor%}
+            <td onclick="boton_ver({{egreso.Id}})">{{egreso.Fecha.strftime('%Y-%m-%d')}}</td>
+            <td onclick="boton_ver({{egreso.Id}})">{{egreso.Importe}}</td>
+            <td onclick="boton_ver({{egreso.Id}})">{{egreso.Descripcion}}</td>
+            <td onclick="boton_ver({{egreso.Id}})">{{egreso.Fcarga.strftime('%Y-%m-%d %H:%M:%S')}}</td>
+
+            <!-- # MODAL BORRAR - CONFIRMACION ? -->
+            <!-- # PAGINACION -->
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<!-- Modal AGREGAR-->
+<div class="modal fade" id="modelNuevo" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Nuevo Egreso
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="submitAdd" action='{{ url_for("cajas.egresos_add") }}' method="post">
+                    <div class="card">
+                        <div class="card-body">
+                            <label for="Id_rubro">Motivo</label>
+                            <select class="form-control mb-2 col-md-8" name="Id_rubro" id="Id_rubro" required>
+                                <option value="x">Seleccione un Rubro</option>
+                                {%for rubro in listarubro%}
+                                <option value="{{rubro.Id}}">{{rubro.Nombre}}</option>
+                                {%endfor%}
+                            </select>
+                            <span id="spanAdd" class="input-group text-danger font-weight-bold"></span>
+                            <label for="datetimepicker1">Fecha</label>
+                            <div class="input-group mb-2 col-md-6">
+                                <input type="text" class="form-control ml-n3" placeholder="YYYY-MM-DD"
+                                    id="datetimepicker1" name="Fecha" required>
+                                <div class="input-group-append">
+                                    <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                                </div>
+                            </div>
+                            <label for="Importe">Importe</label>
+                            <input type="text" step="0.01" maxlength="11" class="form-control" name="Importe"
+                                placeholder="Ingresar monto (0.00)" pattern="[0-9]{1,8}\.[0-9]{1,2}"
+                                title="Usar decimales (0.00)" required>
+                            <label for="Descripcion">Descripcion</label>
+                            <input type="text" maxlength="300" class="form-control mb-2" name="Descripcion"
+                                placeholder="Descripción del Ingreso" required>
+                            <!-- max con moment -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success" type="submit">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal VER -->
+<div class="modal fade" id="modal_ver" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Info</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- ID #?? // form.request['idActividad']-->
+                <form id="submitVer" action='{{ url_for("cajas.egresos_edit") }}' method="post">
+                    <!-- Recarga la pagina, AJAX? -->
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="text" name="idEgreso" id="idEgresoVer" style="display: none;">
+                            <label for="Id_Rubro">Motivo</label>
+                            <select class="form-control mb-2 col-md-8" name="Id_Rubro" id="Id_RubroVer" required
+                                disabled>
+                                <option value="x">Seleccione un Rubro</option>
+                                {%for rubro in rubros%}
+                                <option value="{{rubro.Id}}">{{rubro.Nombre}}</option>
+                                {%endfor%}
+                            </select>
+                            <label for="Fecha">Fecha</label>
+                            <input type="date" class="form-control mb-2 col-md-5" min="2010-01-01" name="Fecha"
+                                id="FechaVer" required readOnly>
+                            <label for="Importe">Importe</label>
+                            <input type="text" step="0.01" maxlength="11" class="form-control" name="Importe"
+                                id="ImporteVer" pattern="[0-9]{1,8}\.[0-9]{1,2}" title="12345678.99" required readOnly>
+                            <label for="Descripcion">Descripcion</label>
+                            <input type="text" maxlength="300" class="form-control mb-2" name="Descripcion"
+                                id="DescripcionVer" required readOnly>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        {%if g.user and g.user.Id_tipousuario == 1 %}
+                        <button type="submit" id="btn-save" class="btn btn-primary"
+                            style="display: none;">Guardar</button>
+                        <button type="button" id="btn-edit" class="btn btn-success btn-md" onclick="boton_editar()"
+                            data-dismiss="modal">Editar</button>
+                        {%endif%}
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <!-- #MODAL ON CLOSE $attr(disabled) ??? // CLOSE MODAL -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $("#submitAdd").submit(() => {
+        rubro = $("#Id_rubro").val()
+        if (rubro == 'x') {
+            $("#spanAdd").text("Seleccione un Rubro!").show().fadeOut(5000)
+            event.preventDefault()
+        }
+    })
+
+    $(function () { // Datetimepicker
+        $('#datetimepicker1').datetimepicker({
+            format: 'YYYY-MM-DD',
+            minDate: moment('2000-01-01'),
+            maxDate: moment(),
+            icons: {
+                previous: "fas fa-chevron-left",
+                next: "fas fa-chevron-right",
+            },
+        });
+        $('.input-group-append').click(function () {
+            $('#datetimepicker1').trigger('focus');
+        });
+    });
+
+    function boton_add() {
+        $("#modelNuevo").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); }); // Cierra el modal
+    }
+
+    function boton_editar() { // Modifica los atributos readOnly y Disabled del modal  #Ver
+        $("#DescripcionVer").removeAttr("readOnly")
+        $("#btn-save").removeAttr("style")
+        $("#btn-edit").attr({ "style": "display: none;" })
+        $("#modal_ver").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+    }
+
+    function boton_ver(id) { // Carga los datos desde la DB al html con los #id de los input
+        $.ajax({
+            url: '{{ url_for("cajas.egresos_modal_ver")}}',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([{
+                "idEgreso": id,
+            }]),
+            success: function (data) {
+                // console.log(data)
+                if (data) {
+                    $("#idEgresoVer").attr({ "value": data.Id })
+                    $("#Id_RubroVer option").each(function () {
+                        if (this.value == data.Id_rubro) {
+                            $(this).attr('selected', 'selected')
+                        }
+                        else {
+                            $(this).removeAttr('selected')
+                        }
+                    })
+                    $("#FechaVer").attr({ "value": data.Fecha })
+                    $("#ImporteVer").attr({ "value": data.Importe })
+                    $("#DescripcionVer").attr({ "value": data.Descripcion })
+                    $("#DescripcionVer").attr({ "readOnly": "readOnly" })
+                    $("#btn-save").attr({ "style": "display: none;" })
+                    $("#btn-edit").removeAttr("style")
+                    $("#modal_ver").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+                }
+            }
+        });
+    }
+
+    //Filtros columnas
+    $(document).ready(function () {
+        var table = $('#myTable').DataTable({
+            "dom": 'Blfrtip',
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info',
+                    exportOptions: {
+                        columns: [0, 1, 2, 3]
+                    },
+                    customize: function (win) {
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .removeClass('table-hover')
+                            .css('font-size', 'inherit');
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa fa-file-pdf"> PDF</i>',
+                    titleAttr: 'Exportar a PDF',
+                    className: 'btn btn-danger',
+                    exportOptions: {
+                        columns: [0, 1, 2, 3]
+                    },
+                }
+            ]
+        });
+    });
+</script>
+
+{% endblock %}

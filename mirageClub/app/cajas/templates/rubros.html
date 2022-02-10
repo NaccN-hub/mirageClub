@@ -1,0 +1,204 @@
+{% extends "base_template.html" %}
+
+{% block title %}Rubros{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg">
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <button type="button" class="btn btn-primary btn-lg" onclick="boton_add()">
+            Cargar Nuevo Rubro
+        </button>
+        {%endif%}
+    </div>
+    <div class="col-md">
+        <div class="btn-group float-right" role="group">
+            <a class="btn btn-primary btn-lg mr-1 " href='{{ url_for("cajas.ingresos") }}'>
+                Ingresos
+                <!-- Cargar con MODAL?? // url for ruta ingresos: crear editar borrar-->
+            </a>
+            <a class="btn btn-primary btn-lg" href='{{ url_for("cajas.egresos") }}'>
+                Egresos
+                <!-- Cargar con MODAL?? // url for ruta egresos: crear editar borrar?? crear rubro-->
+            </a>
+        </div>
+    </div>
+</div>
+<br>
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap" id="myTable">
+    <thead class="text-center">
+        <th scope="col">Nombre</th>
+        <th scope="col">Estado</th>
+    </thead>
+    <tbody>
+        {%for rubro in rubros %}
+        <tr class="text-center text-dark table-secondary">
+            <td class="text-left" onclick="boton_ver({{rubro.Id}})">{{rubro.Nombre}}</td>
+            {% if rubro.Eliminado == 1 %}
+            <td onclick="boton_ver({{rubro.Id}})"> Activo </td>
+            {% else %}
+            <td onclick="boton_ver({{rubro.Id}})"> Eliminado </td>
+            {%endif%}
+            <!-- # MODAL BORRAR - CONFIRMACION ? -->
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<!-- Modal AGREGAR-->
+<div class="modal fade" id="modelNuevo" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Nuevo Rubro
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="submitAdd" action='{{ url_for("cajas.rubros_add") }}' method="post">
+                    <div class="card">
+                        <div class="card-body">
+                            <label for="Nombre">Nombre</label>
+                            <input type="text" maxlength="200" class="form-control mb-2" name="Nombre"
+                                placeholder="Nombre del Rubro" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success" type="submit">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal VER -->
+<div class="modal fade" id="modal_ver" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Info</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- ID #?? // form.request['idActividad']-->
+                <form id="submitVer" action='{{ url_for("cajas.rubros_edit") }}' method="post">
+                    <!-- Recarga la pagina, AJAX? -->
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="text" name="idRubro" id="idRubroVer" style="display: none;">
+                            <label for="Nombre">Nombre</label>
+                            <input type="text" maxlength="200" class="form-control mb-2" name="Nombre" id="NombreVer"
+                                required>
+                            <label for="Estado">Estado</label>
+                            <select type="text" class="form-control mb-2" name="Estado" id="EstadoVer" disabled
+                                required>
+                                <option value=1>Activo</option>
+                                <option value=0>Eliminado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        {%if g.user and g.user.Id_tipousuario == 1 %}
+                        <button type="submit" id="btn-save" class="btn btn-primary"
+                            style="display: none;">Guardar</button>
+                        <button type="button" id="btn-edit" class="btn btn-success btn-md" onclick="boton_editar()"
+                            data-dismiss="modal">Editar</button>
+                        {%endif%}
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function boton_add() {
+        $("#modelNuevo").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); }); // Cierra el modal
+    }
+
+    function boton_editar() { // Modifica los atributos readOnly y Disabled del modal  #Ver
+        $("#NombreVer").removeAttr("readOnly")
+        $("#btn-save").removeAttr("style")
+        $("#btn-edit").attr({ "style": "display: none;" })
+        $("#modal_ver").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+    }
+
+    function boton_ver(id) { // Carga los datos desde la DB al html con los #id de los input
+        $.ajax({
+            url: '{{ url_for("cajas.rubros_modal_ver")}}',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([{
+                "idRubro": id,
+            }]),
+            success: function (data) {
+                // console.log(data)
+                if (data) {
+                    $("#idRubroVer").attr({ "value": data.Id })
+                    $("#NombreVer").attr({ "value": data.Nombre })
+                    $("#EstadoVer").val(Number(data.Eliminado))
+                    $("#NombreVer").attr({ "readOnly": "readOnly" })
+                    $("#btn-save").attr({ "style": "display: none;" })
+                    $("#btn-edit").removeAttr("style")
+                    $("#modal_ver").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+                }
+            }
+        });
+    }
+
+    //Filtros columnas
+    $(document).ready(function () {
+        var table = $('#myTable').DataTable({
+            "dom": 'Blfrtip',
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info',
+                    exportOptions: {
+                        columns: [0]
+                    },
+                    customize: function (win) {
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .removeClass('table-hover')
+                            .css('font-size', 'inherit');
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa fa-file-pdf"> PDF</i>',
+                    titleAttr: 'Exportar a PDF',
+                    className: 'btn btn-danger',
+                    exportOptions: {
+                        columns: [0]
+                    },
+                }
+            ]
+        });
+    });
+</script>
+
+{% endblock %}

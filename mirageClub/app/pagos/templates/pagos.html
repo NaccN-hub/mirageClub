@@ -1,0 +1,358 @@
+{% extends "base_template.html" %}
+
+{% block title %}Pagos{% endblock %}
+{%block body%}style="max-width: 70%;" {%endblock%}
+
+{% block content %}
+<div class="row mb-2 ml-1">
+    <div id="buscar" class="form-group row">
+        <label for="query" class="col-sm-2 col-form-label">Buscar: </label>
+        <input type="text" class="col-sm-8 form-control ml-4" name="query" id="query" />
+    </div>
+    <div id="saldo" class="form-group row text-center offset-md-2">
+        <label for="subt" class="col-sm-2 col-form-label-lg ml-n5">Saldo: </label>
+        <input type="text" class="col-sm-6 ml-3 bg-secondary text-white form-control-lg font-weight-bold" name="subt"
+            id="resta" readonly />
+    </div>
+</div>
+
+<div class="row">
+    <!-- Tabla Deudas -->
+    <div class="table-responsive col-md-6">
+        <table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap"
+            cellspacing="0" id="tablaDeudas">
+            <thead class="text-center">
+                <tr>
+                    <th colspan="3" class="bg-secondary">Deudas</th>
+                </tr>
+                <tr>
+                    <th>Socio</th>
+                    <th>Descripcion</th>
+                    <th>Importe</th>
+                </tr>
+            </thead>
+            <tbody id="bodyDeudas">
+                {%for deuda in deudas%}
+                <tr class="text-center text-dark table-secondary">
+                    {% for socio in socios%}
+                    {%if socio.Id == deuda.Id_socio%}
+                    {%for persona in personas%}
+                    {%if persona.Id == socio.Id_persona%}
+                    <td class="text-left" onclick="boton_ver_deuda({{deuda.Id}})">{{persona.Nombre}}</td>
+                    {%endif%}
+                    {%endfor%}
+                    {%endif%}
+                    {%endfor%}
+                    <td onclick="boton_ver_deuda({{deuda.Id}})">{{deuda.Descripcion}} |
+                        {{deuda.Mes.strftime('%Y-%m-%d').capitalize()}}</td>
+                    <td onclick="boton_ver_deuda({{deuda.Id}})">{{deuda.Importe}}</td>
+                    <!-- # MODAL BORRAR - CONFIRMACION ? -->
+                    <!-- # PAGINACION -->
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th id="num1" class="text-center"></th>
+                    <!--aca se muestra la suma total de deudas-->
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Tabla Pagos -->
+    <div class="table-responsive col-md-6">
+        <table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap"
+            cellspacing="0" id="tablaPagos">
+            <thead class="text-center">
+                <tr>
+                    <th colspan="3" class="bg-secondary">Pagos</th>
+                </tr>
+                <tr>
+                    <th>Socio</th>
+                    <th>Mes de Imputacion</th>
+                    <th>Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%for pago in pagos%}
+                <tr id="colPagos" class="text-center text-dark table-secondary">
+                    {%for deuda in deudas%}
+                    {%if deuda.Id == pago.Id_deuda%}
+                    {% for socio in socios%}
+                    {%if socio.Id == deuda.Id_socio%}
+                    {%for persona in personas%}
+                    {%if persona.Id == socio.Id_persona%}
+                    <td class="text-left" onclick="boton_ver_pago({{deuda.Id}}, {{pago.Id}})">{{persona.Nombre}}</td>
+                    <td onclick="boton_ver_pago({{deuda.Id}}, {{pago.Id}})">{{deuda.Mes.strftime('%Y-%m-%d')}}</td>
+                    <td onclick="boton_ver_pago({{deuda.Id}}, {{pago.Id}})">{{pago.Monto}}</td>
+                    {%endif%}
+                    {%endfor%}
+                    {%endif%}
+                    {%endfor%}
+                    {%endif%}
+                    {%endfor%}
+                    <!-- # MODAL BORRAR - CONFIRMACION ? -->
+                    <!-- # PAGINACION -->
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th id="num2" class="text-center"></th>
+                    <!--aca se muestra la suma total de pagos-->
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<!-- Modal VER Deudas -->
+<div class="modal fade" id="modal_ver_deudas" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
+    aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Info Deuda</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- ID #?? // form.request['idActividad']-->
+                <form id="submitVer" action='{{ url_for("deudas.editar_deuda") }}' method="post">
+                    <!-- Recarga la pagina, AJAX? -->
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="text" name="idDeuda" id="idDeudaVer" style="display: none;">
+                            <label for="Id_socio">Persona</label>
+                            <select class="form-control mb-2" name="Id_socio" id="Id_socioVerDeuda" required disabled>
+                                <option value="x">Seleccione una Persona ##SocAct</option>
+                                {% for socio in socios%}
+                                {%for persona in personas%}
+                                {%if persona.Id == socio.Id_persona%}
+                                <option value="{{socio.Id}}">{{persona.Nombre}}</option>
+                                {%endif%}
+                                {%endfor%}
+                                {%endfor%}
+                            </select>
+                            <label for="Descripcion">Descripcion</label>
+                            <input type="text" maxlength="300" class="form-control mb-2" name="Descripcion"
+                                id="DescripcionVerDeuda" required readOnly>
+                            <div class="form-row">
+                                <div class="form-group col-md-5">
+                                    <label for="Mes">Mes</label>
+                                    <input type="date" class="form-control mb-2" min="2000-01-01" max="2021-12-31"
+                                        name="Mes" id="MesVerDeuda" required disabled>
+                                </div>
+                                <div class="form-group col-md-6 ml-4">
+                                    <label for="Importe">Valor de la Cuota</label>
+                                    <input type="text" step="0.01" maxlength="11" class="form-control mb-2"
+                                        name="Importe" id="ImporteVerDeuda" pattern="[0-9]{1,8}\.[0-9]{1,2}"
+                                        title="12345678.99" required readOnly>
+                                </div>
+                                <label for="Estado">Estado</label>
+                                <select type="text" class="form-control mb-2" name="Estado" id="EstadoVerDeuda" disabled
+                                    required>
+                                    <option value=1>Abonada</option>
+                                    <option value=0>Se debe</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <!-- #MODAL ON CLOSE $attr(disabled) ??? // CLOSE MODAL -->
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal VER Pagos -->
+<div class="modal fade" id="modal_ver_pagos" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
+    aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Info Deuda</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- ID #?? // form.request['idActividad']-->
+                <form id="submitVer" action='{{ url_for("deudas.editar_deuda") }}' method="post">
+                    <!-- Recarga la pagina, AJAX? -->
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="text" name="idPago" id="idPagoVer" style="display: none;">
+                            <label for="Id_socio">Persona</label>
+                            <select class="form-control mb-2" name="Id_socio" id="Id_socioVerPago" required disabled>
+                                <option value="x">Seleccione una Persona ##SocAct</option>
+                                {% for socio in socios%}
+                                {%for persona in personas%}
+                                {%if persona.Id == socio.Id_persona%}
+                                <option value="{{socio.Id}}">{{persona.Nombre}}</option>
+                                {%endif%}
+                                {%endfor%}
+                                {%endfor%}
+                            </select>
+                            <label for="Descripcion">Descripcion</label>
+                            <input type="text" maxlength="300" class="form-control mb-2" name="Descripcion"
+                                id="DescripcionVerPago" required readOnly>
+                            <div class="form-row">
+                                <div class="form-group col-md-5 mb-2">
+                                    <label for="Mes">Mes</label>
+                                    <input type="date" class="form-control" min="2000-01-01" name="Mes" id="MesVerPago"
+                                        required disabled>
+                                </div>
+                                <div class="form-group col-md-6 ml-4">
+                                    <label for="Importe">Valor de la Cuota</label>
+                                    <input type="text" step="0.01" maxlength="11" class="form-control" name="Importe"
+                                        id="ImporteVerPago" pattern="[0-9]{1,8}\.[0-9]{1,2}" title="12345678.99"
+                                        required readOnly>
+                                </div>
+                                <label for="Estado">Estado</label>
+                                <select type="text" class="form-control mb-3" name="Estado" id="EstadoVerPago" disabled
+                                    required>
+                                    <option value=1>Abonada</option>
+                                    <option value=0>Se debe</option>
+                                </select>
+                                <div class="form-group col-md-5 mb-2">
+                                    <label for="Fechapago">Fecha de Pago</label>
+                                    <input type="date" class="form-control" min="2000-01-01" name="Fechapago"
+                                        id="FechaVerPago" required disabled>
+                                </div>
+                                <div class="form-group col-md-6 ml-4">
+                                    <label for="Monto">Monto Abonado</label>
+                                    <input type="text" step="0.01" maxlength="11" class="form-control" name="Monto"
+                                        id="MontoVerPago" pattern="[0-9]{1,8}\.[0-9]{1,2}" title="12345678.99" required
+                                        readOnly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <!-- #MODAL ON CLOSE $attr(disabled) ??? // CLOSE MODAL -->
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function boton_ver_deuda(id) { // Carga los datos desde la DB al html con los #id de los input
+        $.ajax({
+            url: '{{ url_for("deudas.modal_ver")}}',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([{
+                "idDeuda": id,
+            }]),
+            success: function (data) {
+                // console.log(data)
+                if (data) {
+                    $("#idDeudaVer").attr({ "value": data.Id })
+                    $("#Id_socioVerDeuda").val(data.Id_socio)
+                    $("#DescripcionVerDeuda").attr({ "value": data.Descripcion })
+                    $("#MesVerDeuda").attr({ "value": data.Mes })
+                    $("#ImporteVerDeuda").attr({ "value": data.Importe })
+                    $("#EstadoVerDeuda").val(Number(data.Abonada))
+                    $("#modal_ver_deudas").modal('show')
+                    // Cerrar Modal ???
+                }
+            }
+        });
+    }
+
+    function boton_ver_pago(deuda, pago) { // Carga los datos desde la DB al html con los #id de los input
+        $.ajax({
+            url: '{{ url_for("deudas.modal_ver")}}',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([{
+                "idDeuda": deuda,
+                "idPago": pago,
+            }]),
+            success: function (data) {
+                // console.log(data)
+                if (data) {
+                    $("#idPagoVer").attr({ "value": data.Id })
+                    $("#Id_socioVerPago").val(data.Id_socio)
+                    $("#DescripcionVerPago").attr({ "value": data.Descripcion })
+                    $("#MesVerPago").attr({ "value": data.Mes })
+                    $("#ImporteVerPago").attr({ "value": data.Importe })
+                    $("#EstadoVerPago").val(Number(data.Abonada))
+                    $("#FechaVerPago").attr({ "value": data.Fechapago })
+                    $("#MontoVerPago").attr({ "value": data.Monto })
+                    $("#modal_ver_pagos").modal('show')
+                    // Cerrar Modal ???
+                }
+            }
+        });
+    }
+
+    //Filtros columnas
+    $(document).ready(function () {
+        var table1 = $('#tablaDeudas').DataTable({
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "dom": 'lrtip',
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            "drawCallback": function () { //calcula el total de una columna cada vez que se "dibuja"
+                var api = this.api();
+                $(api.column(0).footer()).html(
+                    'Total: $ ' + api.column(2, { page: 'current' }).data().sum().toFixed(2)
+                )
+            }
+        });
+
+        var table2 = $('#tablaPagos').DataTable({
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "dom": 'lrtip', // Elementos de la tabla a mostrar: Length, Table, Pagination -- Filtering, se le saca la F para no ver search box 
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            "drawCallback": function () { //calcula el total de una columna cada vez que se "dibuja"
+                var api = this.api();
+                $(api.column(0).footer()).html(
+                    'Total: $ ' + api.column(2, { page: 'current' }).data().sum().toFixed(2)
+                )
+                saldo()
+            }
+        });
+
+        $('#query').on('keyup change', function () {
+            table1.search(this.value).draw();
+            table2.search(this.value).draw();
+            saldo()
+        })
+    });
+
+    // Calcular Saldo
+    function saldo() {
+        let num1 = document.querySelectorAll("#num1")[1].innerHTML.replace(/[^0-9.]/g, '');
+        let num2 = document.querySelectorAll("#num2")[1].innerHTML.replace(/[^0-9.]/g, '');
+        let total = (Number(num1) - Number(num2)).toFixed(2)
+        $("#resta").delay(400).attr({ "value": '$ ' + total });
+    }
+</script>
+{% endblock %}

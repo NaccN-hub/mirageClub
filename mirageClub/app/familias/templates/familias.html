@@ -1,0 +1,171 @@
+{% extends "base_template.html" %}
+
+{% block title %}Familias{% endblock %}
+
+{% block content %}
+<div class="row">
+    <br>
+    <div class="col-lg">
+        <br>
+        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#modalNuevo">
+            Cargar Familiar
+        </button>
+    </div>
+</div>
+<br>
+
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap" id="myTable">
+    <thead class="text-center">
+        <th scope="col">Numero ID</th>
+        <th scope="col">Familiar</th>
+        <th scope="col">Persona a cargo</th>
+        <th scope="col">Fecha</th>
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        {%for fam in familiares %}
+        <tr class="text-center text-dark table-secondary">
+            <td class="text-left">{{fam.Id}}</td>
+            {%for persona in personas%}
+            {%if persona.Id == fam.Id_persona%}
+            <td>{{persona.Nombre}}</td>
+            {%endif%}
+            {%endfor%}
+            {%for socio in socios%}
+            {%if socio.Id == fam.Id_socio%}
+            {%for persona in personas%}
+            {%if socio.Id_persona == persona.Id%}
+            <td>{{persona.Nombre}}</td>
+            {%endif%}
+            {%endfor%}
+            {%endif%}
+            {%endfor%}
+            <td>{{fam.Fingreso.strftime('%Y-%m-%d')}}</td>
+            <td>
+                <div class="form-group" style="display:flex; justify-content:space-evenly">
+                    <a href='{{ url_for("familias.borrar_familia", id = fam.Id) }}'
+                        onclick="return confirm('Esta seguro?')">
+                        <button class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Eliminar</button>
+                    </a>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Modal AGREGAR-->
+<div class="modal fade" id="modalNuevo" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Nuevo Familiar
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="submitAdd" action='{{ url_for("familias.nueva_familia")}}' method="post">
+                    <div class="card">
+                        <div class="card-body">
+                            <label for="Id_socio">Elegir persona a cargo</label>
+                            <select class="form-control mb-2 col-md-8" name="Id_socio" id="Id_socio" required>
+                                <option value='x'>familiar</option>
+                                {%for socio in socios%}
+                                {%for persona in personas%}
+                                {%if persona.Id == socio.Id_persona%}
+                                <option value="{{socio.Id}}">{{persona.Nombre}}</option>
+                                {%endif%}
+                                {%endfor%}
+                                {%endfor%}
+                            </select>
+                            <span id="spanSocio" class="input-group text-danger font-weight-bold"></span>
+                            <label for="Id_persona">Elegir miembro de familia</label>
+                            <select class="form-control mb-2 col-md-8" name="Id_persona" id="Id_persona" required>
+                                <option value='x'>persona</option>
+                                {%for socio in socios%}
+                                {%for persona in personas%}
+                                {%if persona.Id == socio.Id_persona%}
+                                <option value="{{socio.Id}}">{{persona.Nombre}}</option>
+                                {%endif%}
+                                {%endfor%}
+                                {%endfor%}
+                            </select>
+                            <span id="spanPersona" class="input-group text-danger font-weight-bold"></span>
+                            <label for="Fingreso">Fecha</label>
+                            <input type="date" class="form-control mb-2 col-md-5" min="2010-01-01" name="Fingreso"
+                                required>
+                            <!-- max con moment -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success" type="submit">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    //Filtros columnas
+    $(document).ready(function () {
+        var table = $('#myTable').DataTable({
+            "dom": 'Blfrtip',
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            orderCellsTop: true,
+            scrollY: 525,
+            scrollX: true,
+            "order": [[1, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info',
+                    exportOptions: {
+                        columns: [0, 1, 2, 3]
+                    },
+                    customize: function (win) {
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .removeClass('table-hover')
+                            .css('font-size', 'inherit');
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa fa-file-pdf"> PDF</i>',
+                    titleAttr: 'Exportar a PDF',
+                    className: 'btn btn-danger',
+                    exportOptions: {
+                        columns: [0, 1, 2, 3]
+                    },
+                }
+            ]
+        });
+    });
+
+    $("#submitAdd").submit(() => {
+        select_persona = $("#Id_persona").val()
+        select_socio = $("#Id_socio").val()
+        if (select_socio == 'x') {
+            $("#spanSocio").text("Seleccione un Socio!").show().fadeOut(5000)
+            event.preventDefault()
+        }
+        else if (select_persona == 'x') {
+            $("#spanPersona").text("Seleccione una Persona!").show().fadeOut(5000)
+            event.preventDefault()
+        }
+    })
+</script>
+
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base_template.html" %}
+
+{% block title %}Actividades de socios{% endblock %}
+
+{% block content %}
+
+
+<h2 class="text-center">Activades de {{nombre}}</h2>
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#nuevaActividad">
+    Agregar Actividad
+</button>
+
+
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3" id="myTable">
+    <thead>
+        <th scope="col">Actividades</th>
+        <th scope="col">Bor</th>
+    </thead>
+    <tbody>
+        {%for socioAct in socioActividad%}
+        <tr class="text-center text-dark table-secondary">
+            <!-- AGREGAR ON CLICK MODAL VER  -->
+            {% for socio in socios%}
+                {%if socio.Id == socioAct.Id_socio%}
+                    {%for pers in persona%}
+                        {%if pers.Id == socio.Id_persona%}
+                        <td class="text-left">{{pers.Nombre}}</td>
+                        <td><button class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i> Borrar</button></td>
+                        {%endif%}
+                    {%endfor%}
+                {%endif%}
+            {%endfor%}
+        </tr>
+        {%endfor%}
+
+
+    </tbody>
+</table>
+
+
+<!-- Modal agregar socioActividad -->
+<div class="modal fade" id="nuevaActividad" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar actividad</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="submitAdd" action='{{ url_for("sociosActividad.nuevo_socioActividad")}}' method="post">
+                    <div class="container-fluid">
+                        <label>Elegir Socio</label>
+                        <select id="Id_socio" class="form-control mb-2" name="Id_socio" required>
+                            <option value="x">Seleccione un Socio</option>
+                            {%for socio in listaSocios%}
+                                {%for pers in persona%}
+                                    {%if pers.Id == socio.Id_persona%}
+                                    <option value="{{socio.Id}}">{{pers.Nombre}}</option>
+                                    {%endif%}
+                                {%endfor%}
+                            {%endfor%}
+                        </select>
+                        <span id="spanAddSocio" class="input-group text-danger font-weight-bold"></span>
+                        <label>Elegir Actividad</label>
+                        <select id="Id_actividad" class="form-control mb-2" name="Id_actividad" required>
+                            <option value="x">Seleccione una actividad</option>
+                            {%for actividad in actividades%}
+                            <option value="{{actividad.Id}}">{{actividad.Nombre}}</option>
+                            {%endfor%}
+                        </select>
+                        <span id="spanAddActividad" class="input-group text-danger font-weight-bold"></span>
+                        <label for="Fingreso">Fecha de Ingreso</label>
+                        <input type="date" class="form-control mb-2" min="2010-01-01" max="2021-12-31" name="Fingreso"
+                            required>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#submitAdd").submit(() => {
+        socio = $("#Id_socio").val()
+        actividad = $("#Id_actividad").val()
+        console.log(socio)
+        console.log(actividad)
+        if (socio == 'x') {
+            $("#spanAddSocio").text("Seleccione un socio!").show().fadeOut(5000)
+            event.preventDefault()
+        }
+        else if (actividad == 'x') {
+            $("#spanAddActividad").text("Seleccione una actividad!").show().fadeOut(5000)
+            event.preventDefault()
+        }
+    })
+</script>
+{% endblock %}

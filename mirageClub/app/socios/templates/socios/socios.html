@@ -1,0 +1,275 @@
+{% extends "base_template.html" %}
+
+{% block title %}Socios{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg">
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#modelNuevo">
+            Cargar Nuevo Socio
+        </button>
+        {%endif%}
+    </div>
+    <div class="col-md">
+        <div class="btn-group float-right" role="group">
+            <a class="btn btn-primary btn-lg mr-1 " href='{{ url_for("familias.index") }}'>
+                Familiares
+            </a>
+            <a class="btn btn-primary btn-lg mr-1 " href='{{ url_for("personas.index") }}'>
+                Personas
+            </a>
+            <a class="btn btn-primary btn-lg" href='{{ url_for("actividades.index") }}'>
+                Actividades
+            </a>
+        </div>
+    </div>
+</div>
+<br>
+<table style="width:100%" class="table table-dark table-hover table-bordered mt-3 display nowrap" id="myTable">
+    <thead class="text-center">
+        <th scope="col"># Socio</th>
+        <th scope="col">Nombre</th>
+        <th scope="col">Fecha de Ingreso</th>
+        <th scope="col">Estado</th>
+        {%if g.user and g.user.Id_tipousuario == 1 %}
+        <th scope="col"></th>
+        {%endif%}
+        <th scope="col"></th>
+    </thead>
+    <tbody>
+        {%for soc in socio%}
+        <tr class="text-center text-dark table-secondary">
+            <td onclick="boton_ver({{soc.Id}})">{{soc.Id}}</td>
+            {%for pers in persona%}
+            {%if pers.Id == soc.Id_persona%}
+            <td class="text-left" onclick="boton_ver({{soc.Id}})">{{pers.Nombre}}</td>
+            {%endif%}
+            {%endfor%}
+            <td onclick="boton_ver({{soc.Id}})">{{soc.Fingreso.strftime('%d-%m-%Y')}}</td>
+            {% if soc.Activo == 1 %}
+            <td onclick="boton_ver({{soc.Id}})"> Activo </td>
+            {% else %}
+            <td onclick="boton_ver({{soc.Id}})"> Inactivo </td>
+            {%endif%}
+            {%if g.user and g.user.Id_tipousuario == 1 %}
+            <td>
+                <a href='{{ url_for("socios.borrar_socio", id = soc.Id) }}' class="btn btn-danger"
+                    onclick="return confirm('¿Borrar Socio: {{soc}} ?')"><i class="fa fa-trash"
+                        aria-hidden="true"></i>Eliminar</a>
+
+            </td>
+            {%endif%}
+            <!-- Socio Actividad -->
+            <td>
+                <form action="/socioActividad/{{soc.Id}}">
+                    <button class="btn btn-success" type="submit">Actividades</button>
+                </form>
+            </td>
+            <!-- # MODAL BORRAR - CONFIRMACION ? -->
+            <!-- # PAGINACION -->
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<!-- Modal AGREGAR-->
+<div class="modal fade" id="modelNuevo" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Nuevo Socio
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="submitAdd" action='{{ url_for("socios.nuevo_socio") }}' method="post">
+                    <div class="card">
+                        <div class="card-body">
+                            <label for="Id_persona">Persona</label>
+                            <select class="form-control mb-2 col-md-8" name="Id_persona" id="Id_persona" required>
+                                <option value="x">Seleccione una Persona</option>
+                                {%for pers in listaPersonas%}
+                                <option value="{{pers.Id}}">{{pers.Nombre}}</option>
+                                {%endfor%}
+                            </select>
+                            <span id="spanAdd" class="input-group text-danger font-weight-bold"></span>
+                            <label for="datetimepicker1">Fecha de Ingreso</label>
+                            <div class="input-group mb-2 col-md-6">
+                                <input type="text" class="form-control ml-n3" placeholder="YYYY-MM-DD"
+                                    id="datetimepicker1" name="Fingreso" required>
+                                <div class="input-group-append">
+                                    <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" type="submit">
+                    Guardar
+                </button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal VER -->
+<div class="modal fade" id="modal_ver" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Info</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- ID #?? // form.request['idActividad']-->
+                <form id="submitVer" action='{{ url_for("socios.editar_socio") }}' method="post">
+                    <!-- Recarga la pagina, AJAX? -->
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="text" name="idSocio" id="idSocioVer" style="display: none;">
+                            <label for="Id_persona">Persona</label>
+                            <select class="form-control mb-2 col-md-8" name="Id_persona" id="Id_personaVer" required
+                                disabled>
+                                <option value="x">Seleccione una Persona</option>
+                                {%for pers in persona%}
+                                <option value="{{pers.Id}}">{{pers.Nombre}}</option>
+                                {%endfor%}
+                            </select>
+                            <span id="spanVer" class="input-group text-danger font-weight-bold"></span>
+                            <label for="Fingreso">Fecha de Ingreso</label>
+                            <input type="date" class="form-control mb-2 col-md-5" min="2010-01-01" name="Fingreso"
+                                id="FingresoVer" required readOnly>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        {%if g.user and g.user.Id_tipousuario == 1 %}
+                        <button type="submit" id="btn-save" class="btn btn-primary"
+                            style="display: none;">Guardar</button>
+                        <button type="button" id="btn-edit" class="btn btn-success btn-md" onclick="boton_editar()"
+                            data-dismiss="modal">Editar</button>
+                        {%endif%}
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                        <!-- #MODAL ON CLOSE $attr(disabled) ??? // CLOSE MODAL -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $("#submitVer").submit(() => {
+        persona = $("#Id_personaVer").val()
+        if (persona == 'x') {
+            $("#spanVer").text("Seleccione una Persona!").show().fadeOut(5000)
+            event.preventDefault()
+        }
+    })
+
+    $(function () { // Datetimepicker
+        $('#datetimepicker1').datetimepicker({
+            format: 'YYYY-MM-DD',
+            minDate: moment('2000-01-01'),
+            maxDate: moment(),
+            icons: {
+                previous: "fas fa-chevron-left",
+                next: "fas fa-chevron-right",
+            },
+        });
+        $('.input-group-append').click(function () {
+            $('#datetimepicker1').trigger('focus');
+        });
+    });
+
+    $("#submitAdd").submit(() => {
+        persona = $("#Id_persona").val()
+        if (persona == 'x') {
+            $("#spanAdd").text("Seleccione una Persona!").show().fadeOut(5000)
+            event.preventDefault()
+        }
+    })
+
+    function boton_editar() { // Modifica los atributos readOnly y Disabled del modal  #Ver
+        $("#Id_personaVer").removeAttr("disabled")
+        $("#FingresoVer").removeAttr("readOnly")
+        $("#btn-save").removeAttr("style")
+        $("#btn-edit").attr({ "style": "display: none;" })
+        $("#modal_ver").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+        // Cerrar Modal ???
+    }
+
+    function boton_ver(id) { // Carga los datos desde la DB al html con los #id de los input
+        $.ajax({
+            url: '{{ url_for("socios.modal_ver")}}',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify([{
+                "idSocio": id,
+            }]),
+            success: function (data) {
+                // console.log(data)
+                if (data) {
+                    $("#Id_personaVer option").each(function () {
+                        if (this.value == data.Id_persona) {
+                            $(this).attr('selected', 'selected')
+                        }
+                        else {
+                            $(this).removeAttr('selected')
+                        }
+                    })
+                    $("#FingresoVer").attr({ "value": data.Fingreso })
+                    $("#Id_personaVer").attr({ "disabled": "disabled" })
+                    $("#FingresoVer").attr({ "readOnly": "readOnly" })
+                    $("#btn-save").attr({ "style": "display: none;" })
+                    $("#btn-edit").removeAttr("style")
+                    $("#modal_ver").clone().modal('show').on('hidden.bs.modal', function (e) { $(this).remove(); });
+                    // Cerrar Modal ???
+                }
+            }
+        });
+    }
+
+    //Filtros columnas
+    $(document).ready(function () {
+        var table = $('#myTable').DataTable({
+            "dom": 'Blfrtip',
+            // "lengthMenu": [[12, 25, 50, -1], [12, 25, 50, "Todos"]],
+            orderCellsTop: true,
+            paging: false,
+            lengthChange: false,
+            pageLength: -1,
+            scrollY: 525,
+            scrollX: true,
+            "order": [[2, "desc"]],
+            "language": { "url": "//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Spanish.json" },
+            buttons: [
+                {
+                    extend: 'print',
+                    text: '<i class="fa fa-print"> Imprimir</i>',
+                    titleAttr: 'Imprimir',
+                    className: 'btn btn-info'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa fa-file-pdf"> PDF</i>',
+                    titleAttr: 'Exportar a PDF',
+                    className: 'btn btn-danger'
+                }
+            ]
+        });
+    });
+</script>
+
+{% endblock %}
